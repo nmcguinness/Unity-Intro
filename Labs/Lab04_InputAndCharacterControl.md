@@ -2,7 +2,7 @@
 title: "Input & Character Control"
 subtitle: "Unity Animation Mini-Series — Lab 4 of 5"
 topic_code: t04_input_animator_control
-description: "A 30-minute follow-along lab combining the Animator from Lab 2 with C# scripting from Lab 3, driving character locomotion from keyboard input via Unity 6's project-wide Input System actions. Includes a complete, runnable, beginner-commented PlayerController script."
+description: "A 40-minute follow-along lab combining the Animator from Lab 2 with C# scripting from Lab 3, driving character locomotion from keyboard input via Unity 6's project-wide Input System actions. Includes a complete, runnable, beginner-commented PlayerController script and a FootstepAudio script wired to Animation Events."
 created: 2026-05-02
 last_updated: 2026-05-05
 version: 1.0
@@ -12,19 +12,20 @@ tags: [unity, unity-6.3-lts, input-system, animator, character-control, blender,
 difficulty_tier: Foundational
 unity_version: "6.4 LTS"
 project_template: "3D (URP) Core"
-duration_minutes: 30
+duration_minutes: 40
 previous_topic: t03_procedural_animation
 prerequisites:
   - Labs 1–3 completed
   - You can attach a script to a GameObject and reference Animator parameters
-  - Lab 4 uses content from `REPO_LINK/Lab04_Starter/` (continuation of Lab 2 — Blender character with Idle/Walk Animator, Input System auto-configured by Unity 6 default project-wide actions)
+  - Uses the [repo](https://github.com/nmcguinness/Unity-Intro).
 ---
 
 # Input & Character Control
 > **Prerequisites:**
 > - Labs 1–3 completed.
 > - You have your `Character.fbx` (Blender, with `Idle` and `Walk` clips).
-> - You have cloned the labs repository (`REPO_LINK`). Open `REPO_LINK/Lab04_Starter/` as a Unity project — Lab 2's Animator is pre-built (and prepared for the Bool→Float upgrade you'll do in Step B), the character is already in the scene, and Unity 6's default project-wide input actions are active (no manual setup needed).
+> - You have cloned the labs [repo](https://github.com/nmcguinness/Unity-Intro) to your machine.
+> - Open the Unity project — Lab 2's Animator is pre-built (and prepared for the Bool to Float upgrade you'll do in Step B), the character is already in the scene, and Unity 6's default project-wide input actions are active (no manual setup needed).
 
 ---
 
@@ -115,16 +116,16 @@ The cost of upgrading from Bool to Float is one parameter type change in the Ani
 
 ---
 
-# **Progressive Lab Steps (A → B → C → D → E)**
+# **Progressive Lab Steps (A → B → C → D → E → F)**
 
-> Total budget: **30 minutes**.
+> Total budget: **40 minutes**.
 > **You will not write code from scratch.** The script below is provided complete.
 
 ---
 
 ### Step A — Open the starter and verify Unity 6 input actions (4 min)
 
-Open the starter project at `REPO_LINK/Lab04_Starter/` in Unity 6.3 LTS. The scene `Assets/Scenes/Lab04_Corridor.unity` should open automatically; if not, open it manually.
+Open the project from the repo in Unity 6.4 LTS. The scene `Assets/Scenes/Lab04_Corridor.unity` should open automatically; if not, open it manually.
 
 Check the scene:
 - The Hierarchy contains your `Character` (the Blender FBX from Lab 2) standing on a `CorridorFloor` plane.
@@ -192,6 +193,11 @@ using UnityEngine.InputSystem;
 /// computes a speed value, writes it to the Animator's "Speed" parameter,
 /// and moves the character through space.
 ///
+/// Control scheme:
+///  W / S  — move forward / backward along the character's facing direction.
+///  A / D  — rotate (yaw) the character left / right.
+///  This lets you complete a full 360° turn on the spot or while walking.
+///
 /// REQUIRES:
 ///  - An Animator on the same GameObject with a Float parameter called "Speed".
 ///  - Unity 6's default project-wide actions, which contain "Move" and "Sprint".
@@ -213,8 +219,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField, Tooltip("How fast `currentSpeed` ramps toward target. Higher = snappier, lower = floatier.")]
     private float acceleration = 8f;
 
-    [SerializeField, Tooltip("How quickly the character rotates to face the movement direction.")]
-    private float turnSpeed = 10f;
+    [SerializeField, Tooltip("Rotation speed in degrees per second when pressing A or D.")]
+    private float turnSpeed = 180f;
 
     [Header("Animation Sync")]
     [SerializeField, Tooltip("The world-units-per-second the walk clip was authored for. Used to scale clip playback speed so the legs match the body's velocity. Ask your Blender lecturer if unsure — 2 is a common default.")]
@@ -254,16 +260,17 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         // 1. Read inputs.
-        //    moveInput is a Vector2: x = strafe (-1 to +1), y = forward/back (-1 to +1).
-        //    Composite WASD bindings produce a square magnitude (max 1.0 on each axis,
-        //    or ~1.41 on diagonals). For circular magnitude, Unity normalises this internally.
+        //    moveInput.x = A/D (rotation), moveInput.y = W/S (forward/back).
         Vector2 moveInput = moveAction.ReadValue<Vector2>();
         bool wantsToSprint = sprintAction.IsPressed();
 
+        float horizontal = moveInput.x; // A/D — yaw rotation
+        float vertical   = moveInput.y; // W/S — forward/back translation
+
         // 2. Compute the *target* speed for this frame.
-        //    moveInput.magnitude is 0 when no key is pressed and 1 when fully pressed,
-        //    so multiplying by walkSpeed/runSpeed gives a value in world units per second.
-        float targetSpeed = moveInput.magnitude * (wantsToSprint ? runSpeed : walkSpeed);
+        //    Speed is based only on forward/back input so that pressing A or D
+        //    on the spot rotates the character without triggering the Walk animation.
+        float targetSpeed = Mathf.Abs(vertical) * (wantsToSprint ? runSpeed : walkSpeed);
 
         // 3. Smoothly ramp currentSpeed toward targetSpeed.
         //    Mathf.Lerp here gives natural acceleration instead of a snap from 0 to full speed.
@@ -289,24 +296,21 @@ public class PlayerController : MonoBehaviour
             animator.speed = 1f;
         }
 
-        // 6. Move and rotate the character.
-        //    moveInput.x = strafe (left/right), moveInput.y = forward/back.
-        //    We map those to world-space X and Z (Y is vertical in Unity).
-        Vector3 direction = new Vector3(moveInput.x, 0f, moveInput.y);
-
-        // Only move and rotate when there's actual input — avoids divide-by-zero
-        // when normalising a zero vector during idle.
-        if (direction.sqrMagnitude > 0.01f)
+        // 6. Rotate: A/D yaw the character around its up axis.
+        //    turnSpeed is in degrees per second, so a full 360° turn takes
+        //    (360 / turnSpeed) seconds — about 2 seconds at the default 180.
+        if (Mathf.Abs(horizontal) > 0.01f)
         {
-            Vector3 normalisedDir = direction.normalized;
+            transform.Rotate(Vector3.up, horizontal * turnSpeed * Time.deltaTime);
+        }
 
-            // Move: position += direction × speed × deltaTime.
-            // Time.deltaTime makes movement frame-rate independent.
-            transform.position += normalisedDir * currentSpeed * Time.deltaTime;
-
-            // Rotate: smoothly turn the character's forward axis to face the move direction.
-            // Slerp = spherical-linear interpolation between two direction vectors.
-            transform.forward = Vector3.Slerp(transform.forward, normalisedDir, turnSpeed * Time.deltaTime);
+        // 7. Translate: W/S move the character along its *current* facing direction.
+        //    Using transform.forward (not world +Z) means the character always moves
+        //    in the direction it is facing, regardless of how much it has rotated.
+        if (Mathf.Abs(vertical) > 0.01f)
+        {
+            Vector3 moveDir = transform.forward * Mathf.Sign(vertical);
+            transform.position += moveDir * currentSpeed * Time.deltaTime;
         }
     }
 }
@@ -316,7 +320,7 @@ Save the file. Wait for compilation.
 
 Drag `PlayerController.cs` from the Project window onto the `Character` GameObject in the Hierarchy. With `Character` selected, look at the Inspector — there's now a `Player Controller (Script)` component with all six tuneable fields visible.
 
-**Checkpoint:** Press Play. Press `W` — character walks forward and the character animates. Hold `Shift + W` — character runs forward, the walk clip plays faster to keep up. Release — character returns to idle. Try `WASD` in different combinations and gamepad input.
+**Checkpoint:** Press Play. Press `W` — character walks forward and animates. Hold `Shift + W` — character runs, clip plays faster. Press `A` or `D` — character rotates on the spot without triggering the Walk animation. Hold `W` then steer with `A`/`D` — character walks in a curve and can complete a full 360° turn. Release — character returns to idle.
 
 ---
 
@@ -326,7 +330,7 @@ The default values in the script are reasonable but probably not perfect for you
 
 - **`walkSpeed`** and **`runSpeed`**: how fast the character translates through the world. If movement feels too slow, raise; if it feels rushed, lower. Try `walkSpeed = 1.5` and `runSpeed = 4` for a more deliberate feel; try `3` and `7` for a snappier action-game feel.
 - **`acceleration`**: how quickly the character ramps up from stopped to walking. `8` is responsive but not instant. `2` feels heavy and momentum-driven. `30` feels arcade-like and snappy.
-- **`turnSpeed`**: how fast the character rotates to face the movement direction. `10` is responsive; `4` feels tank-like; `30` snaps instantly.
+- **`turnSpeed`**: rotation speed in **degrees per second** when pressing A or D. `180` completes a half-turn in one second — responsive but not instant. `90` feels heavy and deliberate (a full circle takes 4 seconds). `360` snaps to any direction almost instantly.
 - **`walkClipBaselineSpeed`**: the most important tuning value for synchronising legs and body. If the character's legs cycle *faster* than the body's apparent movement speed, raise this value. If they cycle *slower*, lower it. Typical values are between `1.5` and `3`. The right value depends on how your Blender lecturer authored the walk cycle — ask if unsure.
 
 The visible test for `walkClipBaselineSpeed`: at normal walking speed, the character's foot should appear to be planted on the floor as the body moves over it (no foot-sliding). If feet slide forwards, the clip plays too slow; if they slide backwards, the clip plays too fast.
@@ -335,7 +339,93 @@ The visible test for `walkClipBaselineSpeed`: at normal walking speed, the chara
 
 ---
 
-### Step E — Compare with Lab 2 (2 min)
+### Step E — Add footstep audio via Animation Events (8 min)
+
+Right now the character walks in silence. In this step you'll create a `FootstepAudio` script that holds a pool of audio clips and exposes a method called `OnFootstep`. You'll then wire that method to an **Animation Event** on the walk clip — Unity will call `OnFootstep` automatically at the exact frame each foot strikes the floor.
+
+#### Part 1 — Create the script
+
+In the Project window, right-click `Assets/Scripts/` → `Create > MonoBehaviour Script`. Name it `FootstepAudio.cs`. Open it and replace the entire contents with the code below.
+
+```csharp
+using UnityEngine;
+
+/// <summary>
+/// Plays a random clip from a pool each time OnFootstep() is called.
+/// OnFootstep is invoked by an Animation Event placed on the walk clip —
+/// Unity calls it at the exact frame you choose, so audio stays in sync
+/// with the foot striking the ground without any manual timing code.
+///
+/// REQUIRES: an AudioSource on the same GameObject (auto-added via RequireComponent).
+/// Attach to: the Character GameObject alongside PlayerController.
+/// </summary>
+[RequireComponent(typeof(AudioSource))]
+public class FootstepAudio : MonoBehaviour
+{
+    [SerializeField, Tooltip("Pool of footstep clips to pick from at random. Add 2–4 variations to avoid a robotic repeating sound.")]
+    private AudioClip[] footstepClips;
+
+    [SerializeField, Range(0f, 1f), Tooltip("Playback volume for each footstep hit.")]
+    private float volume = 0.5f;
+
+    private AudioSource audioSource;
+
+    private void Awake()
+    {
+        audioSource = GetComponent<AudioSource>();
+    }
+
+    // Called by the Animation Event on the walk clip at each footfall frame.
+    // Must be public so the Animator can find it by name at runtime.
+    public void OnFootstep()
+    {
+        if (footstepClips == null || footstepClips.Length == 0)
+            return;
+
+        // Pick a random clip so consecutive steps don't sound identical.
+        AudioClip clip = footstepClips[Random.Range(0, footstepClips.Length)];
+
+        // PlayOneShot lets overlapping calls play simultaneously — important when
+        // the character walks quickly or sprints and events fire close together.
+        audioSource.PlayOneShot(clip, volume);
+    }
+}
+```
+
+Save and wait for compilation. Drag `FootstepAudio.cs` onto the `Character` GameObject in the Hierarchy — Unity will automatically add an `AudioSource` component alongside it (enforced by `[RequireComponent]`).
+
+#### Part 2 — Assign footstep audio clips
+
+You need at least one `AudioClip`. Import your footstep audio files (`.wav` or `.mp3`) into `Assets/Audio/` by dragging them from Windows Explorer into the Project window.
+
+1. Select the `Character` GameObject. In the Inspector, find the **Foot Step Audio (Script)** component.
+2. Set **Footstep Clips** size to the number of clips you imported, then drag each clip into a slot.
+3. Leave **Volume** at `0.5` for now — you'll tune it in a moment.
+
+> **Tip:** 2–4 slightly different clips (same surface, slightly different pitch or room tone) make footsteps feel far more natural than a single clip looping.
+
+#### Part 3 — Wire the Animation Event
+
+Animation Events live on the clip itself. Because `Character.fbx` is imported, you add events through the FBX importer's **Animation** tab.
+
+1. In the Project window, select your `Character.fbx`.
+2. In the Inspector, click the **Animation** tab.
+3. Under **Clips**, select your **Walk** clip.
+4. Scroll down to the **Events** section — a mini timeline appears.
+5. Scrub the preview (bottom of Inspector) to find the frame where the **left foot** is flattest on the floor.
+6. Click `+` to add an event at that frame. In the **Function** field, type exactly `OnFootstep` (capital O and F — Unity is case-sensitive).
+7. Repeat for the **right foot** footfall frame.
+8. Click **Apply** at the bottom of the Inspector.
+
+**How it works:** When the walk clip plays, the Animator reaches those event frames and calls `OnFootstep()` by name on every `MonoBehaviour` on the same GameObject. Your `FootstepAudio` component receives the call and plays a random clip from the pool.
+
+Press Play. Walk the character — you should hear a footstep on each footfall. Sprint — the sounds speed up automatically because `animator.speed` (set in `PlayerController`) also scales how fast Animation Events fire.
+
+**Checkpoint:** A footstep sound plays on each footfall. Two events fire per walk cycle (left foot, right foot). Sprinting doubles the tempo of the sounds.
+
+---
+
+### Step F — Compare with Lab 2 (2 min)
 
 In the Animator window during Play mode, watch the `Speed` parameter scrub up and down with your input. Recall Lab 2: you toggled `IsWalking` by hand in this same window. Now the script does it automatically — and as a *spectrum* rather than a binary.
 
@@ -356,9 +446,13 @@ Notice also that the `Speed` parameter ramps smoothly between values rather than
 | Set `acceleration` to `1` | Character takes ages to ramp up — feels heavy and sluggish, like running through water |
 | Set `acceleration` to `100` | Snappy, almost instantaneous response — feels arcade-y, common in fast-paced action games |
 | Comment out the `animator.speed = ...` lines (Step 5 in the script) | Legs no longer match running speed — character "skates" when sprinting. Confirms what `walkClipBaselineSpeed` does. |
-| Set `turnSpeed` to `2` | Character turns slowly — useful for tank-like vehicles, wrong for a human character |
+| Set `turnSpeed` to `45` | Character turns very slowly — one full circle takes 8 seconds. Feels like steering a boat |
+| Set `turnSpeed` to `360` | Instant snap to any direction. Feels arcade-y. Notice there is no easing at all |
 | Replace the `Mathf.Lerp(currentSpeed, targetSpeed, ...)` with `currentSpeed = targetSpeed;` | No smoothing — character snaps between speeds. Confirms why we Lerp. |
 | In Project Settings, swap the `Move` action's WASD binding for arrow keys only | Same code still works — proves the binding/action separation in action |
+| Reduce **Footstep Clips** to a single clip | Notice the robotic "tick tick tick" repetition — confirms why a pool of variations matters |
+| Set footstep **Volume** to `1.0` then `0.1` | Find where audio supports movement without dominating it |
+| Remove one of the two Animation Events (keep left foot only) | Every other step is silent — makes the asymmetry obvious and shows how events map to specific frames |
 
 ---
 
@@ -374,14 +468,18 @@ public class PlayerController : MonoBehaviour { ... }
 **Why?**
 Unity will refuse to add `PlayerController` to a GameObject without an `Animator` — and refuse to remove the Animator while `PlayerController` is attached. Catches setup mistakes at edit time, not runtime. Defensive coding without runtime cost.
 
-### Guard against zero-vector normalisation
+### Guard dead-zone input before acting
 
 ```csharp
-if (direction.sqrMagnitude > 0.01f) { /* move and rotate */ }
+if (Mathf.Abs(horizontal) > 0.01f)
+    transform.Rotate(Vector3.up, horizontal * turnSpeed * Time.deltaTime);
+
+if (Mathf.Abs(vertical) > 0.01f)
+    transform.position += transform.forward * Mathf.Sign(vertical) * currentSpeed * Time.deltaTime;
 ```
 
 **Why?**
-Calling `.normalized` on a zero vector returns `(0,0,0)`, but Slerp on it spins the character wildly toward an undefined target. The guard skips both moves when there's no input. Comparing `sqrMagnitude > 0.01f` is also faster than `magnitude > 0.1f` because it avoids a square root.
+At rest, gamepad sticks rarely return exactly `(0, 0)` — they drift slightly within a small dead zone. The `> 0.01f` threshold discards that noise so the character stays still. Each axis is checked independently: you can rotate without translating (A/D on the spot) or translate without rotating (W/S straight ahead).
 
 ---
 
@@ -394,7 +492,7 @@ Calling `.normalized` on a zero vector returns `(0,0,0)`, but Slerp on it spins 
 | `NullReferenceException` on `moveAction.ReadValue<Vector2>()` | `InputSystem.actions.FindAction("Move")` returned null because the project-wide actions were deleted | Project Settings → Input System Package → Create and assign a default project-wide Action Asset |
 | Character moves too fast / "skates" / legs lag behind body | `walkClipBaselineSpeed` doesn't match your Blender clip's authored speed | Tune `walkClipBaselineSpeed` in the Inspector — raise it if legs cycle too fast, lower it if too slow |
 | Input doesn't respond at all | Active Input Handling set to "Old (Input Manager)" only | Project Settings → Player → Active Input Handling must be `Input System Package` or `Both`. Unity 6 defaults to `Both`, but a project upgraded from older Unity may have `Old` selected |
-| Character spins wildly when stopping | Slerping toward a zero vector | Already handled by the `sqrMagnitude > 0.01f` guard — if you've modified the script and removed it, restore it |
+| Character drifts sideways instead of turning | Using an old version of the script that mapped A/D to world-space strafe | Replace with the current script — A/D call `transform.Rotate`, W/S translate along `transform.forward` |
 | Compilation error: "InputSystem does not contain a definition for 'actions'" | The Input System package isn't installed, or its version is too old | Window → Package Manager → search "Input System" → install or update. Unity 6 ships with this; only happens in projects upgraded from very old Unity versions |
 | Character drifts forward during Idle | Walk clip has root motion baked in (not in-place) | Re-export from Blender as in-place; or in the FBX's Animation tab, set `Root Motion Node` to `<None>` and set `Bake Into Pose` for X/Y/Z |
 | Sprint doesn't change speed | `Sprint` action's binding doesn't match what you're pressing | Project Settings → Input System Package → click Sprint → confirm bindings include Left Shift on keyboard |
@@ -431,9 +529,11 @@ Note the use of `WasPressedThisFrame()` instead of `IsPressed()` — Triggers sh
 
 ## Files produced by end of lab
 - `Lab04_CharacterControl/` Unity project (from starter)
-- `Assets/Models/Character.fbx` (from Lab 2's Blender import)
+- `Assets/Models/Character.fbx` (from Lab 2's Blender import, walk clip has two footstep Animation Events added in Step E)
 - `Assets/Animators/CharacterController.controller` (upgraded from Bool to Float in Step B)
 - `Assets/Scripts/PlayerController.cs`
+- `Assets/Scripts/FootstepAudio.cs`
+- `Assets/Audio/` (your footstep clips)
 - `Assets/Scenes/Lab04_Corridor.unity` (from starter)
 
 ---

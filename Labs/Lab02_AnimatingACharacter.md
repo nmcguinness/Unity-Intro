@@ -18,7 +18,7 @@ prerequisites:
   - Lab 1 completed
   - You have your `Character.fbx` from your Blender module containing a rigged character with `Idle` and `Walk` animation clips
   - Comfortable with the Animation window vs Animator window distinction
-  - Lab 2 uses the labs [repo](https://github.com/nmcguinness/Unity-Intro).
+  - Uses the [repo](https://github.com/nmcguinness/Unity-Intro).
 ---
 
 # Lab 2: Animating a Character

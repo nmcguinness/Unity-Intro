@@ -18,7 +18,7 @@ prerequisites:
   - Unity Hub installed and a Unity 6.4 LTS Editor available
   - Familiarity with the Unity Editor layout (Hierarchy, Inspector, Scene, Game)
   - You have your `IcoSphere.fbx` exported from your Blender module
-  - You have cloned the labs repository (REPO_LINK) — Lab 1 uses content from `REPO_LINK/Lab01_Starter/`
+  - Uses the [repo](https://github.com/nmcguinness/Unity-Intro).
   - No prior animation or scripting knowledge assumed
 ---
 

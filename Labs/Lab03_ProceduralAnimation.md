@@ -16,15 +16,16 @@ duration_minutes: 30
 previous_topic: t02_anim_controller_character
 prerequisites:
   - Labs 1 and 2 completed
-  - Familiarity with C# basics from your programming module (variables, methods, classes)
-  - Lab 3 uses content from `REPO_LINK/Lab03_Starter/` (DOTween pre-installed and configured, three primitive cubes pre-placed). Clone `REPO_LINK` if you haven't already.
+  - Familiarity with C# basics from your programming modules (variables, methods, classes)
+  - Uses the [repo](https://github.com/nmcguinness/Unity-Intro).
 ---
 
 # Procedural Animation in Code
 > **Prerequisites:**
 > - You completed Labs 1 and 2.
 > - You can read a basic C# class with `Update()` and `[SerializeField]`.
-> - You have cloned the labs repository (`REPO_LINK`). Open `REPO_LINK/Lab03_Starter/` as a Unity project — DOTween is pre-installed and configured; a scene with three labelled cubes is provided.
+> - You have cloned the labs [repo](https://github.com/nmcguinness/Unity-Intro) to your machine. 
+> - DOTween is pre-installed and configured; a scene with three labelled cubes is provided.
 
 ---
 
@@ -117,12 +118,16 @@ The pattern is `transform.DOSomething(target, duration).SetEase(Ease.X).OnComple
 
 ### Step A — Inspect the starter and verify DOTween (3 min)
 
-Open the starter project at `REPO_LINK/Lab03_Starter/` in Unity 6.3 LTS. The scene `Assets/Scenes/Lab03_LockingMechanism.unity` should open automatically; if not, open it manually.
+<a href="./images/Lab03/l3.1.png" target="_blank" rel="noopener">
+  <img src="./images/Lab03/l3.1.png">
+</a>
+
+Open the  [repo](https://github.com/nmcguinness/Unity-Intro) in Unity 6.3 LTS. The scene `Assets/Scenes/Lab03_LockingMechanism.unity` should open automatically; if not, open it manually.
 
 Check three things in the Project window:
 
 1. The Hierarchy contains three GameObjects named `PistonA`, `PistonB`, `PistonC`.
-2. The folder `Assets/Plugins/Demigiant/DOTween/` exists. (DOTween was pre-installed and pre-configured for you — you'd normally have to import it from the Asset Store and run a setup wizard, but the starter project skips that.)
+2. The folder `Assets/Plugins/Demigiant/DOTween/` exists. (If not, open the Unity Asset Store, search for the free version of [DOTween](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676), and add to your project.)
 3. The folder `Assets/Scripts/` is empty. You'll create three scripts here.
 
 Press Play in the editor briefly. The cubes sit in place doing nothing — that's expected. Stop.
@@ -250,6 +255,10 @@ Now author the curve. With `PistonB` selected, find the `Height Curve` field in 
 - Click on the curve to add new keyframes.
 - Right-click any keyframe for tangent options (the same Flat / Linear / Auto options you used in Lab 1).
 - A good first attempt: a curve that ramps up sharply from `t=0` to `t=0.3`, plateaus until `t=0.7`, then drops sharply back to 0 at `t=1`. This produces a "step up, hold, step down" motion — exactly what a locking piston should do.
+
+<a href="./images/Lab03/l3.2.png" target="_blank" rel="noopener">
+  <img src="./images/Lab03/l3.2.png">
+</a>
 
 Press Play. Compare `PistonB` with `PistonA` — same axis of motion, but `PistonB`'s motion follows whatever shape you drew, not a smooth sine wave. If you want a square-wave-like step motion, `PistonB` can do it; `PistonA` can't.
 
@@ -431,11 +440,6 @@ DOTween tweens persist when a GameObject is disabled, causing errors if the obje
 
 ---
 
-# **Software Development Parallel**
-DOTween's chained API is an example of the **Fluent Builder pattern** common in modern software (LINQ in C#, Stream API in Java, jQuery in JavaScript). The pattern lets you express a sequence of configuration steps in readable left-to-right order. You'll meet it again in OOP design pattern modules and in any ORM or HTTP-client library you use later. Recognising the pattern in DOTween makes it easier to learn the next library that uses the same style — the pattern is more important than any specific implementation.
-
----
-
 # **Stretch Task (optional, take-home)**
 Modify `BobUpDown.cs` to use an `AnimationCurve` instead of `Mathf.Sin`. Author a curve that *only roughly* approximates a sine wave — does the cube still feel like it's bobbing? What does this tell you about how forgiving the human eye is with animation?
 *Use `CurveDrivenMover.cs` as your reference. No walkthrough provided.*
@@ -445,7 +449,6 @@ If you want to push further: chain a sequence of three different DOTween motions
 ---
 
 ## Files produced by end of lab
-- `Lab03_Procedural/` Unity project (from starter)
 - `Assets/Scripts/BobUpDown.cs`
 - `Assets/Scripts/CurveDrivenMover.cs`
 - `Assets/Scripts/DoTweenJump.cs`

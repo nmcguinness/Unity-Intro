@@ -1,6 +1,6 @@
-# Unity Animation Labs — Year 1 Games Development
+# Unity Animation Labs 
 
-Welcome. This repository contains a series of practical Unity labs that take you from your first keyframe to a character whose head turns to track threats in a procedurally-decorated environment. Across the labs you'll build a small interactive scene, scripted in C#, dressed with materials and decals, and capped with constraint-based animation.
+This repository contains a series of practical Unity labs that take you from your first keyframe to a character whose head turns to track threats in a procedurally-decorated environment. Across the labs you'll build a small interactive scene, scripted in C#, dressed with materials and decals, and capped with constraint-based animation.
 
 The labs are designed to be worked through in order. They share a quietly-connected scene that emerges as you progress — but each lab is self-contained, so you can also dip into individual topics if you're catching up or revisiting a concept.
 
@@ -33,7 +33,7 @@ You'll need:
 
 - **Unity Hub** installed.
 - **Unity 6.3 LTS Editor** installed via Unity Hub. The labs will not run reliably on older versions.
-- A Blender-authored **`Ball.fbx`** (used in Lab 1) and **`Character.fbx` with `Idle` and `Walk` clips** (used in Labs 2, 4, 5, 6). These come from your Blender module — speak to your Blender lecturer if you don't yet have them. Lab 5 and 6 starters include backup versions of both for students who miss the Blender prerequisite, but the labs read better when you use your own work.
+- A Blender-authored **`IcoSphere.fbx`** (used in Lab 1) and **`Character.fbx` with `Idle` and `Walk` clips** (used in Labs 2, 4, 5, 6). These come from your Blender module — speak to your Blender lecturer if you don't yet have them. Lab 5 and 6 starters include backup versions of both for students who miss the Blender prerequisite, but the labs read better when you use your own work.
 - A working understanding of **basic C#** (variables, methods, classes, `[SerializeField]`) — needed from Lab 3 onwards. You don't need to write code from scratch in any lab; complete commented scripts are provided.
 
 If you've never opened the Unity Editor before, do that first. Create an empty 3D (URP) Core project, click around, learn where the Hierarchy, Inspector, Scene view, and Game view live. None of the labs will spend time teaching the editor's basic UI.
@@ -93,16 +93,9 @@ unity-animation-labs/
 │   ├── Lab05_DecoratorsMaterialsAndDecals.md
 │   ├── Lab06_HeadTracking.md
 │   └── LabS_PBRMaterials.md
-├── Lab01_Starter/                  (open in Unity Hub when starting Lab 1)
-├── Lab02_Starter/
-├── Lab03_Starter/
-├── Lab04_Starter/
-├── Lab05_Starter/
-├── Lab06_TakeHome/
-└── LabS_Starter/
 ```
 
-Each starter folder is a complete Unity 6.3 LTS project. Open it directly in Unity Hub via *Open* → navigate to the folder. The first open will take a minute or two as Unity imports assets and recompiles scripts.
+Each starter folder is a scene in a single Unity 6.4 LTS project. Open after downloading the starter code in the [repo](https://github.com/nmcguinness/Unity-Intro). The first open will take a minute or two as Unity imports assets and recompiles scripts.
 
 ---
 
@@ -119,17 +112,14 @@ Each starter folder is a complete Unity 6.3 LTS project. Open it directly in Uni
 
 ## Getting help
 
-- **Lab content questions**: ask in the module's Microsoft Teams channel or in your scheduled lab session.
 - **Repository/setup issues**: raise a GitHub Issue with a screenshot of any error message.
 - **Blender asset problems** (rig type, scale, missing clips): speak to your Blender lecturer first — these aren't Unity issues.
-- **Hardware/performance issues**: the labs are designed to run on the standard college lab machines. If you're working from home and hitting performance problems, Unity 6.3 LTS recommends 8GB+ RAM and a GPU with at least 2GB VRAM.
+- **Hardware/performance issues**: the labs are designed to run on the standard college lab machines. If you're working from home and hitting performance problems, Unity 6.4 LTS recommends 8GB+ RAM and a GPU with at least 2GB VRAM.
 
 ---
 
-## Credits & licensing
+## Licensing
 
-- Lab content authored by the Games Development Teaching Team.
-- PBR textures courtesy of [ambientCG](https://ambientcg.com) (CC0).
 - DOTween used under its [free licence](http://dotween.demigiant.com/) (Demigiant).
 - Unity Animation Rigging is part of the Unity Package Manager (Unity Companion License).
 
