@@ -50,7 +50,6 @@ If you've never opened the Unity Editor before, do that first. Create an empty 3
 | **4** | Input & Character Control | Combine the Animator from Lab 2 with a script that reads input via Unity 6's project-wide actions. Upgrade the Animator's Bool to a Float and drive locomotion end-to-end. | Beginner+ | Input System, project-wide actions, `SetFloat`, `[RequireComponent]`, Lerp smoothing, locomotion | [Lab 4](Labs/Lab04_InputAndCharacterControl.md) |
 | **5** | Decorators — Materials, Lights & Decals | Add an emissive pulse to the ball, a flicker effect to corridor lights, and three URP decals to the environment. Decoration via composition, not modification. | Beginner+ | URP emissive materials, HDR + Bloom, Light intensity, Decal Projectors, decoration pattern | [Lab 5](Labs/Lab05_DecoratorsMaterialsAndDecals.md) |
 | **6** | Procedural Head Tracking *(take-home)* | The capstone. Install the Animation Rigging package and add a Multi-Aim Constraint to the character's head, with realistic human cervical limits. Move a target through the scene; the head follows. | Advanced | Animation Rigging, Rig Builder, Multi-Aim Constraint, rotation limits, layered animation, constraint weights | [Lab 6](Labs/Lab06_HeadTracking.md) |
-| **S** | PBR Materials — Sci-Fi Crate *(supplementary)* | A 45-minute deep dive into the URP Lit shader. Build one crate with all six PBR properties — Base Colour, Normal, Metallic, Smoothness, Emission, and Opacity. | Foundational | PBR workflow, normal maps, metallic vs smoothness, HDR emission, transparent surfaces | [Lab S](Labs/LabS_PBRMaterials.md) |
 
 ---
 
@@ -60,7 +59,6 @@ The numbered labs are intended to be worked through **in order** — they share 
 
 ```
 Lab 1 → Lab 2 → Lab 3 → Lab 4 → Lab 5  →  [optional: Lab 6 take-home]
-                                       └─→ [supplementary: Lab S anytime]
 ```
 
 Each numbered lab is **30 minutes**. The full assessed series is 2.5 hours of practical work plus reflection time. Lab 6 is 60–90 minutes take-home, Lab S is 45 minutes whenever convenient.
@@ -86,13 +84,12 @@ The whole environment runs on layered systems you've built piece by piece: keyfr
 unity-animation-labs/
 ├── README.md                       (this file)
 ├── Labs/
-│   ├── Lab01_BouncingBall.md
-│   ├── Lab02_AnimatingACharacter.md
-│   ├── Lab03_ProceduralAnimation.md
-│   ├── Lab04_InputAndCharacterControl.md
-│   ├── Lab05_DecoratorsMaterialsAndDecals.md
-│   ├── Lab06_HeadTracking.md
-│   └── LabS_PBRMaterials.md
+   ├── Lab01_BouncingBall.md
+   ├── Lab02_AnimatingACharacter.md
+   ├── Lab03_ProceduralAnimation.md
+   ├── Lab04_InputAndCharacterControl.md
+   ├── Lab05_DecoratorsMaterialsAndDecals.md
+   └── Lab06_HeadTracking.md
 ```
 
 Each starter folder is a scene in a single Unity 6.4 LTS project. Open after downloading the starter code in the [repo](https://github.com/nmcguinness/Unity-Intro). The first open will take a minute or two as Unity imports assets and recompiles scripts.
