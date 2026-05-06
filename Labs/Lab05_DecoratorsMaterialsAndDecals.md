@@ -2,29 +2,30 @@
 title: "Decorators — Materials, Lights & Decals"
 subtitle: "Unity Animation Mini-Series — Lab 5 of 5"
 topic_code: t05_decorators_materials_particles
-description: "A 30-minute follow-along lab adding emissive materials, flickering lights, and URP decal projectors to the corridor. Combines authored animation, runtime scripting, and visual polish from previous labs into one decorated scene."
+description: "A 40-minute follow-along lab adding emissive materials, flickering lights, and URP decal projectors to the corridor. Students paint three splatter-brush decal textures with alpha channels in GIMP, import them into Unity, and project them onto corridor surfaces. Combines authored animation, runtime scripting, and visual polish from previous labs into one decorated scene."
 created: 2026-05-02
 last_updated: 2026-05-05
 version: 1.0
 status: published
 authors: ["Games Development Teaching Team"]
-tags: [unity, unity-6.3-lts, urp, materials, decals, light-flicker, animation-curve, year1, follow-along-lab]
+tags: [unity, unity-6.3-lts, urp, materials, decals, light-flicker, animation-curve, gimp, texture-authoring, year1, follow-along-lab]
 difficulty_tier: Foundational
 unity_version: "6.4 LTS"
 project_template: "3D (URP) Core"
-duration_minutes: 30
+duration_minutes: 40
 previous_topic: t04_input_animator_control
 prerequisites:
   - Labs 1–4 completed
-  - You have your Blender `EnergyOrb.fbx` (Lab 1) and `Character.fbx` (Labs 2 and 4)
-  - Lab 5 uses content from `REPO_LINK/Lab05_Starter/` (continuation of Lab 4 with corridor geometry, three pre-cropped decal PNGs, URP Decal Renderer Feature pre-enabled, Bloom pre-configured)
+  - You have your Blender `IcoSphere.fbx` (Lab 1) and `Character.fbx` (Labs 2 and 4)
+  - Uses the [repo](https://github.com/nmcguinness/Unity-Intro).
 ---
 
 # Decorators — Materials, Lights & Decals
 > **Prerequisites:**
 > - Labs 1–4 completed.
-> - Your Blender `EnergyOrb.fbx` and `Character.fbx` are imported (the starter includes them).
-> - You have cloned the labs repository (`REPO_LINK`). Open `REPO_LINK/Lab05_Starter/` as a Unity project — corridor geometry pre-built, URP Decal Renderer Feature pre-enabled in the URP Renderer asset, Bloom pre-configured in the scene's Volume, three decal textures pre-cropped with alpha channels in `Assets/Decals/`.
+> - Your Blender `IcoSphere.fbx` and `Character.fbx` are imported (the starter includes them).
+> - You have cloned the labs [repo](https://github.com/nmcguinness/Unity-Intro) to your machine.
+> Corridor geometry pre-built, URP Decal Renderer Feature pre-enabled in the URP Renderer asset, Bloom pre-configured in the scene's Volume. You will paint your own decal textures in GIMP in Step D.
 
 ---
 
@@ -33,7 +34,7 @@ prerequisites:
 | Skill Type | You will be able to… |
 | :-- | :-- |
 | **Conceptual Understanding** | Explain the role of materials, lights, and decals as *decorators* — non-essential systems that amplify the readability and feel of underlying mechanics without changing them. |
-| **Editor & Tool Fluency** | Create and edit URP emissive materials, configure URP Decal Projector components, and tune real-time Light intensity from script. |
+| **Editor & Tool Fluency** | Create and edit URP emissive materials, configure URP Decal Projector components, tune real-time Light intensity from script, and paint decal textures with alpha channels in GIMP using splatter brush techniques. |
 | **Code Implementation** | Read, configure, and tinker with two complete scripts that drive a material's emission and a light's intensity from runtime values. |
 | **Design Skills** | Choose subtle, readable visual effects rather than overwhelming ones — the difference between *polish* and *noise*. |
 
@@ -42,10 +43,10 @@ prerequisites:
 ## **Why this matters**
 Mechanics make a game *work*. Decorators make a game *feel good*. The same character control from Lab 4 can feel sluggish or snappy, dull or alive — entirely depending on the materials, lights, and decals layered on top.
 
-This is your polish pass. It's also where you learn that great game feel is rarely about a single dramatic effect; it's about a dozen tiny ones, each tied to a specific gameplay state, working together. A glowing orb doesn't just look pretty — it draws the eye through the scene. A flickering corridor light doesn't just add atmosphere — it tells the player something is *off* about this place. A scuff mark on the wall doesn't just decorate the geometry — it tells a story about what happened here before the player arrived.
+This is your polish pass. It's also where you learn that great game feel is rarely about a single dramatic effect; it's about a dozen tiny ones, each tied to a specific gameplay state, working together. A glowing IcoSphere doesn't just look pretty — it draws the eye through the scene. A flickering corridor light doesn't just add atmosphere — it tells the player something is *off* about this place. A scuff mark on the wall doesn't just decorate the geometry — it tells a story about what happened here before the player arrived.
 
 You'll add three categories of decorator in this lab, each driven by a different technique:
-- **Emissive material** on the orb — driven by a script reading an `AnimationCurve` (your Lab 1/3 callback).
+- **Emissive material** on the IcoSphere — driven by a script reading an `AnimationCurve` (your Lab 1/3 callback).
 - **Flickering corridor lights** — driven by a script reading another `AnimationCurve`, the same pattern applied to a different output target.
 - **Static decals on the corridor walls** — no script, just URP's Decal Projector component dressed appropriately.
 
@@ -55,7 +56,7 @@ The lab also pays off the implicit narrative arc: the character walks down the c
 
 ## **How this builds on previous content**
 **From Lab 1 you have:**
-- The bouncing `EnergyOrb` with its `Bounce.anim` clip.
+- The bouncing `IcoSphere` with its `Bounce.anim` clip.
 - An `AnimationCurve` you authored in the curve editor.
 
 **From Lab 4 you have:**
@@ -63,7 +64,7 @@ The lab also pays off the implicit narrative arc: the character walks down the c
 - A working corridor scene with the character ready to walk.
 
 **Lab 5 layers visuals onto both:**
-- The orb gets an emissive material that pulses on each impact, driven by an `AnimationCurve`.
+- The IcoSphere gets an emissive material that pulses on each impact, driven by an `AnimationCurve`.
 - The corridor's overhead lights get a flicker effect, driven by a *second* `AnimationCurve` evaluated at a different frequency.
 - Three decals are placed on the corridor walls and floor: a hazard chevron near the entrance, a warning symbol near the chamber door, and a scuff/scorch mark partway along.
 
@@ -82,7 +83,7 @@ This is the **most important lesson of the series**: decorators *attach to* mech
 A material in URP combines a **shader** (the maths) with **properties** (colour, smoothness, emission, etc.). The shader is fixed; you only edit properties.
 
 **Snippet explanation:**
-For this lab, you'll use the URP **Lit** shader (the default for opaque objects), and adjust two properties to make the orb glow: Base Map colour and Emission. Emission is the magic one — it makes a material self-light regardless of scene lighting, and combined with **Bloom** (a post-processing effect already enabled in your Volume), it bleeds outwards into a satisfying sci-fi glow.
+For this lab, you'll use the URP **Lit** shader (the default for opaque objects), and adjust two properties to make the IcoSphere glow: Base Map colour and Emission. Emission is the magic one — it makes a material self-light regardless of scene lighting, and combined with **Bloom** (a post-processing effect already enabled in your Volume), it bleeds outwards into a satisfying sci-fi glow.
 
 ---
 
@@ -119,37 +120,37 @@ Every decorator script in real games follows the same shape: read a value (from 
 
 # **Progressive Lab Steps (A → B → C → D → E)**
 
-> Total budget: **30 minutes**.
-> The starter scene contains: your `EnergyOrb` bouncing in the antechamber, your `Character` controlled by `PlayerController.cs` from Lab 4, a corridor with two overhead `Light` GameObjects, three corridor walls and floor sections, and a sealed chamber door at the far end. URP Bloom is configured. The Decal Renderer Feature is added to the URP Renderer asset.
+> Total budget: **40 minutes**.
+> The starter scene contains: your `IcoSphere` bouncing in the antechamber, your `Character` controlled by `PlayerController.cs` from Lab 4, a corridor with two overhead `Light` GameObjects, three corridor walls and floor sections, and a sealed chamber door at the far end. URP Bloom is configured. The Decal Renderer Feature is added to the URP Renderer asset.
 > **You will not write code from scratch.** Both scripts below are provided complete.
 
 ---
 
-### Step A — Create an emissive material for the orb (5 min)
+### Step A — Create an emissive material for the IcoSphere (5 min)
 
-Open the starter project at `REPO_LINK/Lab05_Starter/` in Unity 6.3 LTS. The scene `Assets/Scenes/Lab05_Chamber.unity` should open automatically; if not, open it manually. The scene shows the orb on the antechamber floor and the character standing at the corridor entrance.
+Open the project. The scene `Assets/Scenes/Lab05_Chamber.unity` should open automatically; if not, open it manually. The scene shows the IcoSphere on the antechamber floor and the character standing at the corridor entrance.
 
-In the Project window, navigate to `Assets/Materials/`. Right-click → `Create > Material`. Name the new asset `OrbGlow.mat`.
+In the Project window, navigate to `Assets/Materials/`. Right-click → `Create > Material`. Name the new asset `IcoSphereGlow.mat`.
 
-With `OrbGlow` selected, configure in the Inspector:
+With `IcoSphereGlow` selected, configure in the Inspector:
 
 - Confirm `Shader` is `Universal Render Pipeline/Lit` (this is the default for new materials in a URP project — leave it alone if so).
 - Click the colour swatch next to **Base Map**. Set the colour to a saturated cyan (R: 0, G: 200, B: 255 in standard mode is a good starting point). Close the colour picker.
 - Tick the **Emission** checkbox. This enables the emission keyword on the material.
 - Click the colour swatch next to `Emission`. The colour picker opens.
-- **Important:** at the top of the colour picker, find the **Intensity** slider (visible only when the colour is in HDR mode — Unity's URP Lit material exposes this by default for the Emission slot). Set the colour to bright cyan (e.g., R: 0, G: 1, B: 1) and the **Intensity** to `2`.
+- **Important:** at the top of the colour picker, find the **Intensity** slider (visible only when the colour is in HDR mode — Unity's URP Lit material exposes this by default for the Emission slot). Set the colour to bright cyan (e.g., R: 0, G: 255, B: 255) and the **Intensity** to 5`.
 
-Drag `OrbGlow.mat` from the Project window onto the `EnergyOrb` GameObject in the Hierarchy. The orb's surface in the Scene view immediately changes to glowing cyan.
+Drag `IcoSphereGlow.mat` from the Project window onto the `IcoSphere` GameObject in the Hierarchy. The IcoSphere's surface in the Scene view immediately changes to glowing cyan.
 
-Press Play briefly. The orb bounces and glows steadily. With Bloom enabled in the scene's Volume (already configured for you), the bright pixels bleed outwards into a soft halo. The glow is constant — Step B will make it pulse.
+Press Play briefly. The IcoSphere bounces and glows steadily. With Bloom enabled in the scene's Volume (already configured for you), the bright pixels bleed outwards into a soft halo. The glow is constant — Step B will make it pulse.
 
-**Checkpoint:** Orb glows steadily with cyan emission and visible bloom. Stop Play.
+**Checkpoint:** IcoSphere glows steadily with cyan emission and visible bloom. Stop Play.
 
 ---
 
 ### Step B — Pulse the emission on impact (7 min)
 
-The orb glows constantly, but it would feel more alive if it pulsed on each bounce — bright at impact, dim at the apex.
+The IcoSphere glows constantly, but it would feel more alive if it pulsed on each bounce — bright at impact, dim at the apex.
 
 In `Assets/Scripts/`, right-click → `Create > MonoBehaviour Script`. Name it `EmissivePulse.cs`. Open it and replace its contents with:
 
@@ -159,7 +160,7 @@ using UnityEngine;
 /// <summary>
 /// Pulses a Renderer's emission colour intensity over time, following an AnimationCurve.
 /// Drives a *material property* using the same curve technique you used for transforms in Lab 3.
-/// Attach to: the EnergyOrb GameObject in the Lab05_Chamber scene.
+/// Attach to: the IcoSphere GameObject in the Lab05_Chamber scene.
 /// </summary>
 [RequireComponent(typeof(Renderer))]
 public class EmissivePulse : MonoBehaviour
@@ -181,7 +182,7 @@ public class EmissivePulse : MonoBehaviour
     private float maxIntensity = 4f;
 
     // We need a *unique* material instance for this object so we don't overwrite the asset
-    // on disk and so multiple orbs could pulse independently.
+    // on disk and so multiple IcoSpheres could pulse independently.
     private Material materialInstance;
 
     // Time accumulator that loops within [0, duration].
@@ -222,9 +223,9 @@ public class EmissivePulse : MonoBehaviour
 }
 ```
 
-Save and wait for compilation. Drag `EmissivePulse.cs` onto the `EnergyOrb` GameObject.
+Save and wait for compilation. Drag `EmissivePulse.cs` onto the `IcoSphere` GameObject.
 
-In the Inspector for `EnergyOrb`, find the new `Emissive Pulse (Script)` component. Click the `Pulse Curve` field to open the curve editor. Author a curve that:
+In the Inspector for `IcoSphere`, find the new `Emissive Pulse (Script)` component. Click the `Pulse Curve` field to open the curve editor. Author a curve that:
 
 - Starts low at `t=0` (apex — minimum glow)
 - Stays low until about `t=0.45`
@@ -236,9 +237,9 @@ The curve should look like a single spike around the middle. Right-click keyfram
 
 Set `Duration` to match your bounce clip's length — `1.0` if you used the standard 60-frame loop from Lab 1.
 
-Press Play. The orb now pulses bright on each impact, dims at the apex.
+Press Play. The IcoSphere now pulses bright on each impact, dims at the apex.
 
-**Checkpoint:** Orb glows brightly when it hits the floor, dims while airborne. The `AnimationCurve` from Lab 1 is now driving a *material* property. Stop Play.
+**Checkpoint:** IcoSphere glows brightly when it hits the floor, dims while airborne. The `AnimationCurve` from Lab 1 is now driving a *material* property. Stop Play.
 
 ---
 
@@ -321,60 +322,109 @@ Press Play and look down the corridor. Each light flickers independently because
 
 ---
 
-### Step D — Add three decals to the corridor (8 min)
+### Step D — Paint three decal textures in GIMP, then project them in Unity (15 min)
 
-Decals add static environmental storytelling — without them, the corridor walls look pristine. With them, the place feels lived-in.
+Decals add static environmental storytelling — scorch marks, contamination splashes, corrosion — without scripting or geometry modification. In this step you'll paint three decal textures from scratch in GIMP using splatter brush techniques, export them as PNGs with alpha channels, then create URP Decal Projector GameObjects in Unity to project each texture onto corridor surfaces.
 
-The starter project has three decal textures pre-cropped with alpha channels in `Assets/Decals/Textures/`:
-- `Decal_HazardChevron.png` — yellow/black warning stripe
-- `Decal_BiohazardSymbol.png` — a biohazard warning symbol
-- `Decal_ScorchMark.png` — a black scuff/scorch mark
+> **What is an alpha channel?** A decal texture must be transparent where no mark was painted, so only the painted shape projects — not a solid rectangle. In GIMP, starting with a transparent canvas gives you an RGBA image automatically. Where you paint, the alpha is opaque; where you don't, it stays transparent. Unity's Decal shader reads this alpha channel to clip the projection cleanly to your painted shape.
 
-You'll create a decal material for each (the material wraps the texture in the URP decal shader), then place a Decal Projector to project each onto the corridor.
+---
 
-**Create the materials:**
+#### Part 1 — Configure GIMP for splatter painting (2 min)
 
-In `Assets/Materials/`, right-click → `Create > Material`. Name the asset `DecalHazard.mat`.
+Open GIMP. You will paint three separate textures; the canvas setup is identical for each.
 
-With `DecalHazard` selected, in the Inspector:
-- Click the **Shader** dropdown at the top. Navigate to `Shader Graphs > Decal`. Select it.
-- The Inspector now shows decal-specific properties. Click the small circle next to **Base Map** and select `Decal_HazardChevron`.
-- Leave **Normal Map** empty (these decals are flat, not surface-detailed).
-- Confirm `Surface Type` (in the material's options) is set up correctly — the Decal shader handles this internally.
+**For each texture, start with:**
 
-Repeat to create `DecalBiohazard.mat` (using `Decal_BiohazardSymbol`) and `DecalScorch.mat` (using `Decal_ScorchMark`).
+1. **File > New** → set **Width** and **Height** both to `512`. Expand **Advanced Options** → change **Fill With** to **Transparency**. Click **OK**. A grey checkerboard canvas appears — the checkerboard indicates transparency (no fill colour).
+2. Confirm the image is in RGBA mode: check that **Image > Flatten Image** in the menu bar is not greyed out. If the canvas shows a solid colour instead of the checkerboard, fix it with **Image > Flatten Image** followed by **Layer > Transparency > Add Alpha Channel**.
+
+**Configure the Paintbrush for splatter:**
+
+1. Press **P** to select the **Paintbrush** tool.
+2. In the **Tool Options** panel (docked below the Toolbox), click the **Brush** thumbnail and select **"Hardness 100"** (a hard round brush — produces crisp-edged marks).
+3. Tick the **Jitter** checkbox. Set **Amount** to `2.5`. Jitter scatters each brush stamp randomly around your cursor — the higher the value, the wider the scatter radius, creating an organic splatter cloud rather than a smooth line.
+4. Set brush **Size** to `100` px and **Opacity** to `80%`.
+
+> **Splatter technique:** a single click deposits one scattered burst; a short fast drag deposits a trail of bursts. Combining a large-brush click for the core mass with smaller-brush edge strokes builds a convincing radial stain.
+
+---
+
+#### Part 2 — Texture 1: Scorch Mark (3 min)
+
+1. **File > New** (512×512, Transparency) as above.
+2. Click the **Foreground Colour** swatch (top swatch in the Toolbox). In the colour picker, enter HTML value **`1a1a1a`** (near-black charcoal). Click **OK**.
+3. Paintbrush, Jitter 2.5, Opacity 80%, size **100 px**. Click once in the centre of the canvas — a scattered cloud of near-black marks appears.
+4. Reduce size to **40 px**, Opacity to **60%**. Make three short fast strokes radiating outward from the centre (vary the angle each time) to create heat-scorch trails.
+5. Reduce size to **15 px**, Opacity **40%**. Click six to eight times around the outer edge to add isolated droplet marks, growing sparser as you move away from the centre.
+6. **File > Export As** → navigate to your Unity project's `Assets/Decals/Textures/` folder (create it if it doesn't exist) → filename **`Decal_ScorchMark.png`** → click **Export** → click **Export** again in the PNG Options dialog to accept defaults.
+
+---
+
+#### Part 3 — Texture 2: Bio-Contamination Splash (3 min)
+
+1. **File > New** (512×512, Transparency).
+2. Foreground Colour → HTML **`7a9a00`** (sickly yellow-green). Click **OK**.
+3. Paintbrush, Jitter 2.5, Opacity 75%, size **90 px**. Click once off-centre (real splash origins are asymmetric). Add two short strokes extending from that point to suggest the fluid spreading.
+4. Change Foreground Colour to **`3d5200`** (deeper green). Size **35 px**, Opacity 55%. Click three or four times inside the densest area to add a pooled dark core.
+5. Change Foreground Colour to **`c8d44a`** (pale yellow). Size **18 px**, Opacity 30%. Click five or six times at the tips of the outer scatter marks to add lighter wet-edge highlights.
+6. **File > Export As → `Decal_BioSplash.png`** → same folder → Export.
+
+---
+
+#### Part 4 — Texture 3: Rust / Impact Stain (3 min)
+
+1. **File > New** (512×512, Transparency).
+2. Foreground Colour → HTML **`7a2e00`** (deep rust-orange). Click **OK**.
+3. Paintbrush, Jitter 2.5, Opacity 70%, size **80 px**. Click five times in a rough cluster rather than dragging — overlapping clicks build a lumpy, irregular mass.
+4. Change Foreground Colour to **`2e0f00`** (dark brown-black). Size **50 px**, Opacity 50%. Click twice in the centre to darken the oldest, thickest rust zone.
+5. Change Foreground Colour to **`d47020`** (pale rust-orange). Size **22 px**, Opacity 35%. Make two short outward strokes from the core to simulate rust bleed running down the wall surface.
+6. **File > Export As → `Decal_RustStain.png`** → same folder → Export.
+
+---
+
+#### Part 5 — Import into Unity, create materials, place projectors (4 min)
+
+Switch to Unity. If the three PNGs don't appear automatically in the Project window, right-click inside `Assets/Decals/Textures/` → **Reimport All**.
+
+**Create the decal materials** — one per texture:
+
+In `Assets/Materials/`, right-click → `Create > Material`. Repeat three times.
+
+| Material name | Shader to assign | Base Map |
+| :-- | :-- | :-- |
+| `DecalScorch.mat` | `Shader Graphs/Decal` | `Decal_ScorchMark` |
+| `DecalBio.mat` | `Shader Graphs/Decal` | `Decal_BioSplash` |
+| `DecalRust.mat` | `Shader Graphs/Decal` | `Decal_RustStain` |
+
+For each: select the material → click the **Shader** dropdown → navigate to **Shader Graphs > Decal** → select it. Then click the circle next to **Base Map** and select your PNG. Leave all other fields at their defaults.
 
 **Create the decal projectors:**
 
-In the Hierarchy, right-click → `Rendering > URP Decal Projector`. A new GameObject called `Decal Projector` appears in the scene. Rename it `Decal_HazardEntry`.
+In the Hierarchy, right-click → `Rendering > URP Decal Projector`. Repeat three times. Rename and configure:
 
-With `Decal_HazardEntry` selected:
-- In the Inspector, find the `Decal Projector` component's `Material` field. Drag `DecalHazard.mat` from the Project window into the slot.
-- A yellow rectangular projection appears in the Scene view, with a white arrow showing the projection direction (downwards by default).
-- Position the projector near the corridor entrance, at floor level. Use the **Move** tool (W) to position it, **Rotate** tool (E) to point the projection arrow downwards onto the floor.
-- Adjust the **Size** fields in the Inspector (`Width`, `Height`, `Projection Depth`) to make the chevron readable but not overwhelming. Try `Width: 2`, `Height: 1`, `Projection Depth: 1`.
-- Confirm the chevron appears on the corridor floor when the projection arrow points down.
+- **`Decal_Scorch`** — drag `DecalScorch.mat` into the **Material** field. Position on a corridor wall midway down. Rotate so the white projection arrow points horizontally into the wall face. Try **Width: 1.5**, **Height: 1.5**, **Projection Depth: 0.5**.
+- **`Decal_Bio`** — drag `DecalBio.mat`. Position near the chamber door. Rotate to project onto the door face (arrow horizontal, pointing at the door).
+- **`Decal_Rust`** — drag `DecalRust.mat`. Position on the corridor floor near the entrance. Rotate so the arrow points straight down.
 
-Repeat to create:
-- `Decal_Biohazard` — projected onto the chamber door at the corridor's end. Rotate the projection arrow to point at the door (horizontally).
-- `Decal_Scorch` — projected onto a corridor wall midway down. Rotate the projection arrow to point at the wall (horizontally).
+Each projector's bounding box (the yellow rectangle in Scene view) must overlap the target surface for the decal to appear. If nothing projects, confirm the white arrow is pointing *into* the surface, not parallel to it or away from it.
 
-You can scale and reposition each projector freely in the Scene view — the projection updates in real time. **Each Decal Projector will only project its decal on geometry within its rectangular bounding box.**
+Press Play. Walk the character through the corridor — all three splatter decals project onto their surfaces and stay in place as static environment detail.
 
-**Checkpoint:** Three decals visible in the scene — hazard chevron on the floor at the corridor entrance, biohazard symbol on the chamber door, scorch mark on a corridor wall. Press Play and walk the character through the corridor; the decals stay in place as static environmental detail.
+**Checkpoint:** Three hand-painted splatter decals visible in the scene — scorch on the wall, bio-contamination near the chamber door, rust on the corridor floor. The alpha channel you painted in GIMP masks each projection so only the splatter shape shows, not a solid rectangle.
 
 ---
 
 ### Step E — Walk the corridor & reflect (3 min)
 
-Press Play. Walk the character (using `PlayerController` from Lab 4) from the antechamber, past the bouncing-pulsing orb, down the flickering corridor with its hazard markings, all the way to the chamber door at the end.
+Press Play. Walk the character (using `PlayerController` from Lab 4) from the antechamber, past the bouncing-pulsing IcoSphere, down the flickering corridor with its hazard markings, all the way to the chamber door at the end.
 
 When the character reaches the chamber, look into the dark space beyond — there's a static silhouette there. Don't approach it. We'll let that question hang.
 
 Stop Play. Reflect:
 
-- The orb's pulse, the lights' flicker, and the corridor decals were all added today *without changing* any of the Lab 1–4 work. Lab 1's bounce clip plays. Lab 4's `PlayerController` script runs. Nothing was modified or rewired. The decoration sits *on top of* the mechanics.
-- The orb pulse and the light flicker share a script *shape*: cache a renderer/light reference, evaluate an `AnimationCurve` over a looping timer, write the result to a property. Two scripts, one pattern.
+- The IcoSphere's pulse, the lights' flicker, and the corridor decals were all added today *without changing* any of the Lab 1–4 work. Lab 1's bounce clip plays. Lab 4's `PlayerController` script runs. Nothing was modified or rewired. The decoration sits *on top of* the mechanics.
+- The IcoSphere pulse and the light flicker share a script *shape*: cache a renderer/light reference, evaluate an `AnimationCurve` over a looping timer, write the result to a property. Two scripts, one pattern.
 - The decals required no script at all — pure editor-side decoration with materials and projectors.
 
 **Checkpoint:** All decorations active, character can walk the full corridor, scene reads as a coherent environment with atmosphere.
@@ -389,12 +439,15 @@ Stop Play. Reflect:
 
 | Try this | Notice |
 | :-- | :-- |
-| Change `OrbGlow`'s emission colour to electric red | The same animation now feels like a charge core / danger signal — colour carries *meaning*, not just decoration |
+| Change `IcoSphereGlow`'s emission colour to electric red | The same animation now feels like a charge core / danger signal — colour carries *meaning*, not just decoration |
 | Set `EmissivePulse.maxIntensity` to `0.2` | Pulse becomes barely visible — emission needs to push past 1 to bloom convincingly |
 | Disable the URP Volume in the scene Hierarchy temporarily | Emission survives but stops blooming — confirms Bloom is half the visual recipe |
 | Set both lights' flicker curves to a steady `1.0` value across the whole curve | Lights stop flickering — proves the curve, not the script, encodes the flicker pattern |
 | Tick `Use Rendering Layers` on a Decal Projector and exclude the chamber door from `Receive decals` | The biohazard symbol vanishes from the door — useful when you want decals to skip specific objects |
 | Move a decal projector while the game is running | Decal moves with it in real time — projectors aren't "baked," they're recalculated each frame |
+| In GIMP, repaint `Decal_ScorchMark` with red foreground colour, re-export, let Unity reimport | The projector in Unity updates instantly — confirms the texture asset and the material are independent; the material just points to the PNG |
+| In GIMP, set Jitter Amount to `0` on one texture and compare to your splattered ones | Smooth round blobs appear instead of scatter — makes the value of Jitter obvious |
+| Paint a 4th texture (e.g. a footprint or arrow), create a 4th material and projector | The full pipeline (GIMP → PNG → material → projector) now runs without instructions |
 
 ---
 
@@ -417,13 +470,14 @@ Stop Play. Reflect:
 | Material renders pink | Shader is Built-in Standard, not URP Lit | Inspector → top of Material → set Shader to `Universal Render Pipeline/Lit` |
 | Emission set but doesn't glow | Intensity ≤ 1 with no Bloom | Raise Intensity above 1 in the HDR colour picker; confirm the URP Volume is active in the scene and Bloom is enabled |
 | `materialInstance.SetColor` does nothing | `Emission` keyword not enabled at material level | Tick the `Emission` checkbox in the material once (already in Step A), even though the script drives the colour value |
-| Performance drops noticeably with many orbs | Each `.material` access creates a new instance | For 1–2 orbs this is fine. For dozens, switch to `MaterialPropertyBlock` (out of scope here, flag for later) |
+| Performance drops noticeably with many IcoSpheres | Each `.material` access creates a new instance | For 1–2 IcoSpheres this is fine. For dozens, switch to `MaterialPropertyBlock` (out of scope here, flag for later) |
+| Decal projects as a solid white or black rectangle, not just the painted shape | PNG was exported without an alpha channel — GIMP saved a flat image | In GIMP, confirm the canvas shows the checkerboard before painting. If you painted on a white background, go **Image > Flatten Image** then **Layer > Transparency > Add Alpha Channel**, use **Colors > Color to Alpha** to remove white, then re-export |
 | Decal Projector shows the bounding box but no visible decal | Material isn't using `Shader Graphs/Decal` shader | Material's Shader dropdown → `Shader Graphs/Decal`. The standard URP/Lit shader can't be projected |
 | Decal appears on the floor but not the walls (or vice versa) | Projection arrow points the wrong way | Rotate the Decal Projector so the white arrow points *into* the surface you want decorated |
 | Decal vanishes when far from the camera | Decal Projector's Draw Distance is too low | Inspector → Decal Projector → raise `Draw Distance` |
 | Lights flicker in lockstep | `randomiseStartOffset` is false on both, or both have identical curves and durations | Tick `Randomise Start Offset` on both lights (already default in script) |
 | Decal Projector option missing from the Hierarchy right-click menu | Decal Renderer Feature isn't added to the URP Renderer | Already configured in starter; if missing, select the URP Renderer asset → Add Renderer Feature → Decal |
-| Orb pulse is offset from impact (bright at apex, dim at impact) | Pulse Curve's spike is at the wrong `t` value | Re-author the curve so the spike sits at `t=0.5` (or wherever your bounce clip's impact occurs in normalised time) |
+| IcoSphere pulse is offset from impact (bright at apex, dim at impact) | Pulse Curve's spike is at the wrong `t` value | Re-author the curve so the spike sits at `t=0.5` (or wherever your bounce clip's impact occurs in normalised time) |
 
 ---
 
@@ -453,9 +507,11 @@ If you want to push further: investigate **Light Cookies** (URP supports project
 ---
 
 ## Files produced by end of lab
-- `Lab05_Decorators/` Unity project (from starter)
-- `Assets/Materials/OrbGlow.mat`
-- `Assets/Materials/DecalHazard.mat`, `DecalBiohazard.mat`, `DecalScorch.mat`
+- `Assets/Materials/IcoSphereGlow.mat`
+- `Assets/Materials/DecalScorch.mat`, `DecalBio.mat`, `DecalRust.mat`
+- `Assets/Decals/Textures/Decal_ScorchMark.png` — painted in GIMP, black splatter on alpha
+- `Assets/Decals/Textures/Decal_BioSplash.png` — painted in GIMP, green splatter on alpha
+- `Assets/Decals/Textures/Decal_RustStain.png` — painted in GIMP, rust-orange splatter on alpha
 - `Assets/Scripts/EmissivePulse.cs`
 - `Assets/Scripts/CorridorLightFlicker.cs`
 - `Assets/Scenes/Lab05_Chamber.unity` (from starter, with three Decal Projectors added)

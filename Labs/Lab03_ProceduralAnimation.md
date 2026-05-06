@@ -24,7 +24,7 @@ prerequisites:
 > **Prerequisites:**
 > - You completed Labs 1 and 2.
 > - You can read a basic C# class with `Update()` and `[SerializeField]`.
-> - You have cloned the labs [repo](https://github.com/nmcguinness/Unity-Intro) to your machine. 
+> - You have cloned the labs [repo](https://github.com/nmcguinness/Unity-Intro) to your machine.
 > - DOTween is pre-installed and configured; a scene with three labelled cubes is provided.
 
 ---

@@ -510,11 +510,6 @@ At rest, gamepad sticks rarely return exactly `(0, 0)` — they drift slightly w
 
 ---
 
-# **Software Development Parallel**
-The pattern of "read input → compute value → write to system" is the **observer / data-flow pattern** common in reactive UI frameworks (React, SwiftUI, Jetpack Compose). Your `Update()` loop is the simplest possible reactive system: input changes → state recomputes → view (Animator + transform) updates. Modern UI frameworks formalise this pattern with hooks, observables, or signals; Unity's `Update()` does it with a tick. The *idea* is the same: derive view from state, recompute when state changes.
-
----
-
 # **Stretch Task (optional, take-home)**
 Add a `Jump` Trigger to the Animator (Lab 2's stretch task), then bind it to the spacebar via the existing `Jump` action in Unity 6's project-wide actions (already present, no setup needed).
 
@@ -528,7 +523,6 @@ Note the use of `WasPressedThisFrame()` instead of `IsPressed()` — Triggers sh
 ---
 
 ## Files produced by end of lab
-- `Lab04_CharacterControl/` Unity project (from starter)
 - `Assets/Models/Character.fbx` (from Lab 2's Blender import, walk clip has two footstep Animation Events added in Step E)
 - `Assets/Animators/CharacterController.controller` (upgraded from Bool to Float in Step B)
 - `Assets/Scripts/PlayerController.cs`

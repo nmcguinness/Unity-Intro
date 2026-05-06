@@ -12,20 +12,20 @@ tags: [unity, unity-6.3-lts, animation-rigging, multi-aim-constraint, procedural
 difficulty_tier: Advanced
 unity_version: "6.4 LTS"
 project_template: "3D (URP) Core"
-duration_minutes: 75
+duration_minutes: 90
 previous_topic: t05_decorators_materials_particles
 prerequisites:
   - Labs 1–5 completed
   - Comfortable installing packages from Unity's Package Manager
   - Comfortable reading and modifying short C# scripts
-  - Lab 6 uses content from `REPO_LINK/Lab06_TakeHome/` (continuation of Lab 5 with chamber expanded, target-sphere prefab pre-configured, character rig pre-verified for head bone orientation)
+  - Uses the [repo](https://github.com/nmcguinness/Unity-Intro).
 ---
 
 # Procedural Head Tracking — The Watcher in the Chamber
 > **Prerequisites:**
 > - You have completed Labs 1–5.
 > - You have your Blender `Character.fbx` and the `Lab05_Chamber.unity` scene as your starting state, or you can use the provided Lab 6 starter (recommended — it has the rig pre-verified).
-> - You have cloned the labs repository (`REPO_LINK`). Open `REPO_LINK/Lab06_TakeHome/` as a Unity project.
+> - You have cloned the labs [repo](https://github.com/nmcguinness/Unity-Intro) to your machine.
 > - This lab is **take-home and optional**. There is no time limit. Aim for 60–90 minutes; if it takes longer, you're learning more.
 
 ---
@@ -103,13 +103,14 @@ Animation Rigging requires three pieces working together:
 3. **Constraints** — components that perform specific procedural overrides. Multi-Aim, Two-Bone IK, Chain IK, Multi-Position, and several others.
 
 **Snippet explanation:**
-Today you'll create the simplest possible setup: one Rig Builder, one Rig, one Multi-Aim Constraint on the head bone. The hierarchy looks like:
+Today you'll create: one Rig Builder, one Rig, and two stacked Multi-Aim Constraints on the head bone — one for yaw (left/right) and one for pitch (up/down). The hierarchy looks like:
 
 ```
 Character (has Animator + Rig Builder)
 ├── (skeleton hierarchy) ...
 └── HeadTrackingRig (has Rig component)
-    └── HeadAim (has Multi-Aim Constraint, with Constrained Object set to the head bone)
+    ├── HeadYaw   (has Multi-Aim Constraint — Y axis only, ±60°)
+    └── HeadPitch (has Multi-Aim Constraint — X axis only, −50° to +60°)
 ```
 
 The `HeadTrackingRig` GameObject sits *next to* the skeleton, not inside it. This is a convention from the Animation Rigging documentation — control rigs live alongside skeletons, not within them.
@@ -123,12 +124,10 @@ The Multi-Aim Constraint takes:
 - One or more **Source Objects** (the targets to look at — multiple weighted targets are supported, hence the "Multi" prefix).
 - An **Aim Axis** (which local axis of the constrained object should point at the target — typically `+Z` for "forward").
 - An **Up Axis** and **World Up** settings (which axis stays vertical, to prevent the head rolling sideways).
-- **Min Limit** and **Max Limit** values for each constrained axis (the human-range constraints we want).
+- A single **Min Limit** and **Max Limit** scalar — one pair per constraint, not per axis. To get independent limits for pitch and yaw, you stack two constraints: one that only constrains the Y axis (yaw), and one that only constrains the X axis (pitch). Each enforces its own Min/Max independently.
 
 **Snippet explanation:**
-Today you'll use a single source object (the target sphere). The Aim Axis must match how your character's head bone was modelled in Blender — for the standard Blender humanoid orientation, this is typically `+Z`. We've pre-verified this in the starter project; for your own characters in the future, you'll need to check.
-
-The Min/Max Limits are the magic that keeps the head movement humanly plausible. Without them, the head would happily rotate 270° backwards. With them, you get the natural "looks toward, but not impossibly" behaviour you see in real games.
+Today you'll use a single source object (the target sphere). The Aim Axis must match how your character's head bone was modelled in Blender — Step C.5 walks you through finding the right value for your specific rig. The Min/Max limits keep head rotation humanly plausible: without them, the head rotates 270° backwards. Two stacked constraints give you the independent per-axis limits a single constraint cannot provide.
 
 ---
 
@@ -141,7 +140,7 @@ This is your knob for blending between authored and procedural animation. A weig
 
 ---
 
-# **Progressive Lab Steps (A → B → C → D → E → F)**
+# **Progressive Lab Steps (A → B → C → D → E → F → G)**
 
 > Take your time. There's no clock. Save your scene at the end of each step.
 
@@ -149,17 +148,17 @@ This is your knob for blending between authored and procedural animation. A weig
 
 ### Step A — Open the starter & install the Animation Rigging package (10 min)
 
-Open the starter project at `REPO_LINK/Lab06_TakeHome/` in Unity 6.3 LTS. The scene `Assets/Scenes/Lab06_Chamber.unity` should open. It's similar to your Lab 5 final state, but the chamber is opened up so you can walk around inside it, and a static `Spider` GameObject sits at the far end.
+Open the starter scene `Assets/Scenes/Lab06_Chamber.unity`. It's similar to your Lab 5 final state, but the chamber is opened up so you can walk around inside it, and a static `Spider` GameObject sits at the far end.
 
 The Animation Rigging package needs to be installed manually (it's not in the default Unity 6 set):
 
-1. Open `Window > Package Manager`.
+1. Open `Window > Package Management > Package Manager`.
 2. In the top-left dropdown, ensure `Packages: Unity Registry` is selected.
 3. Search for **"Animation Rigging"** in the search bar.
 4. Click `Install`.
 5. Wait for installation to complete (~30 seconds). Close the Package Manager.
 
-You'll see a few new menu items appear under `GameObject > Animation Rigging` and a new component category in the Add Component menu.
+You'll see a few new menu items appear under `Animation Rigging` in the main menu and a new component category in the Add Component menu.
 
 **Checkpoint:** Animation Rigging package shows as "installed" in Package Manager. Returning to the scene, the character is still standing in the chamber and the spider is still at the far end. No errors in the console.
 
@@ -196,47 +195,124 @@ Drag a bright material onto it from `Assets/Materials/` (the starter includes `L
 
 ---
 
-### Step C — Add and configure the Multi-Aim Constraint (15 min)
+### Step C — Add and configure the Multi-Aim Constraints (15 min)
 
-Now the procedural rotation logic. This is the most fiddly step in the lab — read each sub-step carefully.
+Now the procedural rotation logic. This is the most fiddly step in the lab — read each sub-step carefully before touching the Inspector.
+
+Two important facts about the Multi-Aim Constraint that will save you frustration:
+
+1. **Min Limit and Max Limit are single scalars, not per-axis values.** You cannot set different limits for pitch and yaw on one constraint. To get independent limits — e.g. ±60° yaw but only −50°/+60° pitch — you stack **two constraints** on the same bone: one that only modifies the Y axis (yaw), and a second that only modifies the X axis (pitch). The Z axis (roll) stays unconstrained on both; human heads don't usefully roll sideways.
+
+2. **World Up Type: Scene Up causes the head to tilt toward a shoulder** when the head bone's local axes don't align with world Y — which is the case for most imported rigs. The fix is **World Up Type: Object Up**, with the character root as the World Up Object. This grounds the up-reference to the character's own skeleton instead of the world.
+
+---
 
 **C.1 — Find the head bone.**
-Expand the `Character`'s skeleton in the Hierarchy. Drill down through the bone names — typical paths are `Hips > Spine > Spine1 > Spine2 > Neck > Head`. The exact names depend on how your Blender lecturer named the rig; you're looking for the bone that visibly corresponds to the head/neck region. You might need to click bones one by one in the Scene view to find the right one.
 
-Make a note of the head bone's exact GameObject name. You'll need it.
+Expand the `Character`'s skeleton in the Hierarchy. Drill down through the bone chain — typical paths are `Hips > Spine > Spine1 > Spine2 > Neck > Head`. The exact names depend on how your Blender lecturer named the rig. If the path isn't obvious, click bones one by one in Scene view and watch which one highlights at the character's head level.
 
-**C.2 — Create the constraint GameObject.**
-In the Hierarchy, right-click `HeadTrackingRig` (the Rig GameObject you made in Step B.2) → `Create Empty`. Rename the new child `HeadAim`.
+Make a note of the head bone's exact GameObject name. You'll need it twice.
 
-With `HeadAim` selected, click `Add Component` → search for `Multi-Aim Constraint` → add it.
+---
 
-**C.3 — Wire up the constraint.**
-The Multi-Aim Constraint component has many fields. Configure them precisely:
+**C.2 — Create two constraint GameObjects.**
 
-- **Weight:** `1.0` (full override; we'll experiment with lower values later).
-- **Constrained Object:** drag the head bone from the Hierarchy into this slot. The component now knows which bone to rotate.
-- **Source Objects:** click the `+` to add an entry. Drag `LookTarget` (the sphere from Step B.4) into the `Transform` field. Set the weight column next to it to `1.0`.
-- **Aim Axis:** `Z` (positive Z-axis — assumes Blender authored the head bone with Z+ as forward; this is the standard for Blender humanoid rigs).
-- **Up Axis:** `Y` (positive Y-axis — the head's up direction).
-- **World Up Type:** `Scene Up` (uses the scene's global Y-up to keep the head from rolling).
-- **Maintain Rotation Offset:** *ticked* — preserves the head's authored rotation as a baseline rather than snapping to "look directly at target with no offset".
-- **Constrained Axes:** all three (`X`, `Y`, `Z`) ticked — full rotation freedom subject to the limits we set next.
-- **Min Limit:** `(-50, -60, -30)` — pitch min, yaw min, roll min in degrees.
-- **Max Limit:** `(60, 60, 30)` — pitch max, yaw max, roll max in degrees.
+In the Hierarchy, right-click `HeadTrackingRig` → `Create Empty`. Rename it `HeadYaw`.
+Right-click `HeadTrackingRig` again → `Create Empty`. Rename it `HeadPitch`.
 
-The Min/Max values use the **comfortable human cervical range**:
-- **Pitch (X axis): -50° to +60°** — the head can look down ~50° and up ~60° from its rest position before straining.
-- **Yaw (Y axis): ±60°** — the head can rotate left/right by 60° before the shoulders need to follow.
-- **Roll (Z axis): ±30°** — the head can tilt sideways by 30° before looking unnatural.
+`HeadYaw` should appear **above** `HeadPitch` in the Hierarchy (drag to reorder if needed). Unity executes Rig constraints top-to-bottom, so yaw applies first and pitch layers on top.
 
-Beyond these ranges, real humans rotate their shoulders or whole upper body. We're not implementing that here, so the head simply stops at the limit. This produces the naturalistic "tries to look but can't quite reach" behaviour you see in good games.
+With `HeadYaw` selected: `Add Component` → `Multi-Aim Constraint`.
+With `HeadPitch` selected: `Add Component` → `Multi-Aim Constraint`.
 
-**C.4 — Test it.**
-Press Play. The character idles. Move the `LookTarget` sphere in the Scene view (or click on it and drag its Transform position handles in the Inspector). The character's head should rotate to follow it.
+---
 
-**Checkpoint:** Moving `LookTarget` makes the character's head turn. The head stops at the configured limits — you can prove this by moving the sphere directly behind the character; the head turns as far as it can but doesn't snap around.
+**C.3 — Configure HeadYaw (left/right rotation, ±60°).**
 
-If the head doesn't move, or moves to an unexpected axis, see Pitfalls below — it's almost certainly an Aim Axis or Constrained Object misconfiguration.
+Select `HeadYaw`. In the Multi-Aim Constraint Inspector, set every field as follows:
+
+| Field | Value |
+| :-- | :-- |
+| **Weight** | `1` |
+| **Constrained Object** | drag the head bone from the Hierarchy |
+| **Source Objects** | click `+` → drag `LookTarget` → set the weight column to `1` |
+| **Aim Axis** | `Z` *(verify in C.5 — may differ for your rig)* |
+| **Up Axis** | `Y` |
+| **World Up Type** | **Object Up** |
+| **World Up Object** | drag the `Character` root GameObject (the one with the Animator) |
+| **Maintain Offset** | **ticked** |
+| **Constrained Axes** | X ☐ **Y ☑** Z ☐ |
+| **Min Limit** | `-60` |
+| **Max Limit** | `60` |
+
+Unchecking X and Z means this constraint **only rotates the head around its Y axis** — pure left/right yaw. It will not affect pitch or roll at all.
+
+`Object Up` anchors the up-reference to the character's own skeleton. When the character tilts slightly on uneven ground or when the head bone's local Y isn't perfectly vertical, the head stays upright relative to the body instead of rolling toward a shoulder.
+
+---
+
+**C.4 — Configure HeadPitch (up/down rotation, −50° to +60°).**
+
+Select `HeadPitch`. Configure identically to HeadYaw **except** for the constrained axis and limits:
+
+| Field | Value |
+| :-- | :-- |
+| **Weight** | `1` |
+| **Constrained Object** | the same head bone |
+| **Source Objects** | `+` → `LookTarget` → weight `1` |
+| **Aim Axis** | `Z` *(same as HeadYaw — match whatever you set in C.5)* |
+| **Up Axis** | `Y` |
+| **World Up Type** | **Object Up** |
+| **World Up Object** | the `Character` root |
+| **Maintain Offset** | **ticked** |
+| **Constrained Axes** | **X ☑** Y ☐ Z ☐ |
+| **Min Limit** | `-50` |
+| **Max Limit** | `60` |
+
+Unchecking Y and Z means this constraint **only rotates the head around its X axis** — pure pitch. The asymmetric limits (−50° down, +60° up) reflect real human cervical range: looking up toward the ceiling is slightly easier than looking down at your feet.
+
+> **Why Z stays unchecked on both:** roll (tilting the head toward a shoulder) isn't a useful degree of freedom for world-awareness head tracking, and leaving it free tends to produce unnatural corkscrew motion when the target moves to extreme positions. Both constraints leave Z unchecked, so the head never rolls.
+
+---
+
+**C.5 — Find the correct Aim Axis for your rig.**
+
+The Aim Axis tells the constraint which local axis of the head bone points out the face. This depends on how the rig was built in Blender and is **not always Z** — verify it now rather than debugging later.
+
+**Quick test:**
+
+1. Press **Play**.
+2. In the Inspector, temporarily set `HeadYaw`'s **Constrained Axes** to X ☑ Y ☑ Z ☑ (all three) so you can see the full rotation.
+3. Position `LookTarget` **directly in front of the character** at face height, about 2 units away.
+4. The head should point squarely at the target with no sideways tilt.
+
+If the head tilts, rolls, or points the wrong direction, work through the Aim Axis options in this order until the head faces correctly:
+
+| Try | Typical cause |
+| :-- | :-- |
+| `Z` | Standard Blender humanoid (Rigify, most manually-rigged chars) |
+| `-Z` | Rig exported with Z flipped — face points backward |
+| `Y` | Bone's length axis is forward — common in some auto-riggers |
+| `-Y` | Same but flipped |
+| `X` or `-X` | Unusual orientations; try last |
+
+Once the head faces the target cleanly, **set the same Aim Axis on both `HeadYaw` and `HeadPitch`**, then restore `HeadYaw`'s Constrained Axes back to Y-only (X ☐ Y ☑ Z ☐).
+
+---
+
+**C.6 — Test the full setup.**
+
+Stop Play, verify both constraints are configured, then Press Play again.
+
+Move the `LookTarget` sphere:
+
+- **Left and right** — head yaws to follow, stops at ±60° when the target moves behind the character.
+- **Up and down** — head pitches to follow, stops at −50° (floor-level) and +60° (above head).
+- **Directly behind the character** — the head turns as far as 60° and then stops. It does not snap around 270°.
+
+The head should stay upright at all times — no tilting toward a shoulder. If you still see tilt, confirm `World Up Type` is **Object Up** on both constraints and that `World Up Object` is the `Character` root (not `HeadTrackingRig`, not the head bone itself).
+
+**Checkpoint:** Moving `LookTarget` produces clean yaw and pitch head tracking. The head stops at the configured limits. No shoulder-tilt at any target position. The character's body continues its idle animation untouched.
 
 ---
 
@@ -360,7 +436,155 @@ If your mouse moves the target too fast, lower the `Input Sensitivity` field. If
 
 ---
 
-### Step E — Walk to the spider, watch the head turn (10 min)
+### Step E — Proximity-based look activation with a trigger zone (12 min)
+
+Right now the head constraints are always active at weight 1 — the character looks at the target from anywhere in the scene. That's not how awareness works in games. In this step you'll place a trigger zone near the Spider; when the character walks into it, head tracking switches on, and when they leave, it switches off. This is the **awareness radius** pattern used in virtually every third-person character: NPCs don't react to things they haven't walked close enough to notice.
+
+---
+
+**E.1 — Create the trigger zone GameObject.**
+
+In the Hierarchy, right-click on an empty area → `Create Empty`. Name it `LookZone`. Position it at the Spider's location — use the Spider's Transform position in the Inspector as a reference, then set LookZone's Position to the same world coordinates.
+
+With `LookZone` selected, `Add Component` → `Sphere Collider`. Configure it:
+
+- **Is Trigger**: **ticked**
+- **Center**: `(0, 0, 0)`
+- **Radius**: `5` (world units — the character must walk within 5 metres of the Spider for tracking to activate; you'll tune this in E.6)
+
+Add a second component: `Add Component` → `Rigidbody`. Configure it:
+
+- **Use Gravity**: unticked
+- **Is Kinematic**: **ticked**
+- Expand **Constraints** → freeze all six (Position X, Y, Z and Rotation X, Y, Z)
+
+> **Why a Rigidbody?** Unity's `OnTriggerEnter` / `OnTriggerExit` messages only fire when at least one of the two overlapping objects has a Rigidbody. Without it the physics engine ignores the overlap entirely and your script never gets called. A kinematic, gravity-free, fully-frozen Rigidbody satisfies that requirement without any visible effect on the scene.
+
+---
+
+**E.2 — Tag the Character.**
+
+Select the `Character` root GameObject. At the very top of the Inspector, click the **Tag** dropdown → `Player`.
+
+If `Player` is not in the list: click **Add Tag...** → click `+` → type `Player` → press Enter → navigate back to the Character and set the tag.
+
+The `LookAtZone` script will use this tag to distinguish the character from any other colliders that might wander into the zone (other GameObjects, the Spider itself, etc.).
+
+---
+
+**E.3 — Add a Collider to the Character.**
+
+For the trigger to detect the Character, the Character needs a Collider. Select the `Character` root. `Add Component` → `Capsule Collider`. Configure it to roughly match the character's body:
+
+| Field | Value |
+| :-- | :-- |
+| Center | `(0, 0.9, 0)` |
+| Radius | `0.3` |
+| Height | `1.8` |
+| Direction | `Y-Axis` |
+| Is Trigger | unticked |
+
+Do **not** add a Rigidbody here — the `PlayerController` script already handles movement via `transform.position`. Adding a dynamic Rigidbody would conflict with that. The Capsule Collider alone is enough for trigger detection because `LookZone` already supplies the required Rigidbody.
+
+---
+
+**E.4 — Create LookAtZone.cs.**
+
+In `Assets/Scripts/`, create a new MonoBehaviour script called `LookAtZone.cs`. Replace its contents with:
+
+```csharp
+using UnityEngine;
+using UnityEngine.Animations.Rigging;
+
+/// <summary>
+/// Enables the head-tracking constraints when a tagged object enters this
+/// trigger zone and disables them on exit.
+///
+/// Place this near a point of interest (e.g. the Spider). Head tracking is
+/// off by default and only activates when the character is close enough.
+///
+/// REQUIRES: a SphereCollider (Is Trigger = true) and a Kinematic Rigidbody
+///           on the same GameObject.
+/// </summary>
+[RequireComponent(typeof(Collider))]
+public class LookAtZone : MonoBehaviour
+{
+    [SerializeField, Tooltip("Multi-Aim Constraint on the HeadYaw GameObject.")]
+    private MultiAimConstraint headYawConstraint;
+
+    [SerializeField, Tooltip("Multi-Aim Constraint on the HeadPitch GameObject.")]
+    private MultiAimConstraint headPitchConstraint;
+
+    [SerializeField, Tooltip("Tag on the Character root. Must match exactly — Unity tags are case-sensitive.")]
+    private string characterTag = "Player";
+
+    [SerializeField, Range(0f, 1f), Tooltip("Weight applied to both constraints when the character is inside the zone.")]
+    private float activeWeight = 1f;
+
+    [SerializeField, Range(0f, 1f), Tooltip("Weight applied to both constraints when the character is outside the zone.")]
+    private float inactiveWeight = 0f;
+
+    private void Start()
+    {
+        // Head tracking off at startup — the character hasn't entered the zone yet.
+        SetWeight(inactiveWeight);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!other.CompareTag(characterTag)) return;
+        SetWeight(activeWeight);
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (!other.CompareTag(characterTag)) return;
+        SetWeight(inactiveWeight);
+    }
+
+    private void SetWeight(float weight)
+    {
+        headYawConstraint.weight = weight;
+        headPitchConstraint.weight = weight;
+    }
+}
+```
+
+Save and wait for compilation. Drag `LookAtZone.cs` onto the `LookZone` GameObject.
+
+---
+
+**E.5 — Wire the Inspector references.**
+
+Select `LookZone`. In the Inspector, find the **Look At Zone (Script)** component:
+
+- **Head Yaw Constraint**: drag the `HeadYaw` GameObject from `Character > HeadTrackingRig > HeadYaw` into the slot. Unity resolves the `MultiAimConstraint` component automatically from the GameObject.
+- **Head Pitch Constraint**: drag `HeadPitch` from `Character > HeadTrackingRig > HeadPitch` the same way.
+- **Character Tag**: leave as `Player` (or change to match whatever tag you set in E.2).
+- **Active Weight**: `1` — full tracking when inside the zone.
+- **Inactive Weight**: `0` — tracking fully off outside the zone.
+
+---
+
+**E.6 — Test and tune.**
+
+Press Play. Walk the character **away** from the Spider. Confirm the head is no longer tracking — the constraints are at weight 0, so the head follows the Animator's authored pose.
+
+Now walk the character toward the Spider. As you cross the zone boundary:
+
+- The green SphereCollider gizmo in Scene view shows the exact radius (visible while `LookZone` is selected).
+- `OnTriggerEnter` fires → both constraints jump to weight 1 → the head turns toward `LookTarget`.
+- If `LookTarget` is positioned near the Spider, the head looks directly at it.
+
+Walk back out. `OnTriggerExit` fires → constraints return to 0 → head tracking stops.
+
+To adjust the awareness radius, stop Play and change the **Sphere Collider Radius** on `LookZone` in the Inspector. A radius of `3` creates a tight "only when very close" trigger; `8` creates a wide approach corridor.
+
+**Checkpoint:** Head tracking is off when the character is outside the zone, activates at the zone boundary, and deactivates when the character leaves. The zone radius is visible as a green sphere in Scene view. The character's body animation is unaffected throughout.
+
+---
+
+### Step F — Walk to the spider, watch the head turn (10 min)
 
 This is the payoff. Press Play. Walk the character (using `WASD` and `Shift`) from the corridor entrance, down the corridor, through the door, into the chamber. The whole way, your mouse continues to move the `LookTarget`.
 
@@ -374,12 +598,12 @@ Walk in a circle around the spider (still moving the target to it as you go). Th
 
 ---
 
-### Step F — Tune the feel (10 min)
+### Step G — Tune the feel (10 min)
 
 The default constraint values produce a believable result, but tuning unlocks character-specific personality. Try these tweaks during Play mode:
 
-**Constraint Weight (HeadAim's Weight slider).**
-Lower it from 1.0 to 0.7. The head still tracks but the original walk-cycle head-bob comes through more strongly. The motion feels less robotic, more like the head is drawn to the target rather than locked onto it. Try 0.5 — even more organic. Try 0.3 — the tracking becomes a subtle lean rather than a turn.
+**Constraint Weight (HeadYaw and HeadPitch weight sliders).**
+Lower both from 1.0 to 0.7. The head still tracks but the original walk-cycle head-bob comes through more strongly. The motion feels less robotic, more like the head is drawn to the target rather than locked onto it. Try 0.5 — even more organic. Try 0.3 — the tracking becomes a subtle lean rather than a turn. Try setting HeadYaw to 0.8 and HeadPitch to 0.5 — the head turns more confidently than it tilts, which is how attentive humans actually look at things at a distance.
 
 **Limit values.**
 Raise `Max Limit` Y to 90° (extending yaw to maximum human range). The head tries to look further behind — but if you push the target *too* far behind, the head still stops at the maximum and reads as "trying but unable" rather than impossible 270° rotation.
@@ -407,6 +631,10 @@ Untick it. The head rotation no longer respects the original authored rotation �
 | Change `Aim Axis` to `-Z` | The head rotates 180° wrong — the back of the head points at the target. Demonstrates exactly why Aim Axis must match the rig's authored forward direction |
 | Untick `Constrained Axes > Z` (roll) | The head can no longer tilt sideways to look at extreme angles — a more "stiff" tracking that's actually closer to how military characters look at things |
 | Move the LookTarget to inside the character's body | The head tries to look "into itself" — the limits prevent grotesque rotation but the result is uncomfortable. Confirms the limits are doing real work |
+| Set `LookZone` Sphere Collider Radius to `1` then `15` | At radius 1 the character must nearly touch the Spider; at 15 the head starts tracking from the corridor entrance — the radius defines the "noticing distance" |
+| Set **Active Weight** on `LookAtZone` to `0.4` instead of `1` | Tracking activates subtly on enter — the head turns partway, as if the character notices something in peripheral vision rather than snapping to full attention |
+| Add a second `LookZone` near the corridor entrance pointing at a different `LookTarget` | Two independent awareness zones — the character's head switches attention between points as they walk through the scene |
+| Replace the instant `SetWeight` call with a `Coroutine` that lerps weight over 0.5s | The on/off transition becomes a smooth fade rather than a snap — much more natural for slow realisation vs sudden alert |
 
 ---
 
@@ -426,12 +654,15 @@ Untick it. The head rotation no longer respects the original authored rotation �
 | Mistake | Why it happens | Fix |
 | :-- | :-- | :-- |
 | Head doesn't turn at all | Rig Builder doesn't reference the Rig, OR the Rig's `Active` toggle is off, OR the Multi-Aim Constraint's weight is 0 | Check all three. The Rig must be in the Rig Builder's `Rig Layers` list and active. The constraint's weight must be > 0. |
-| Head turns to wrong axis (looks sideways or backwards) | Aim Axis doesn't match the head bone's forward direction | Try each of `X`, `-X`, `Y`, `-Y`, `Z`, `-Z` until the head looks correctly. For standard Blender rigs, `Z` is correct |
-| Head twists weirdly when target is directly above or below | Up Axis configuration is wrong | Set Up Axis to `Y` and World Up Type to `Scene Up`. If still weird, try `World Up Type: Object Up` with `World Up Object` set to the character's root |
+| Head turns to wrong axis (looks sideways or backwards) | Aim Axis doesn't match the head bone's forward direction | Follow the C.5 diagnostic: set all three Constrained Axes temporarily, move `LookTarget` in front of the character, try `Z → -Z → Y → -Y → X → -X` until the face points at the target. Set the same Aim Axis on both `HeadYaw` and `HeadPitch`. |
+| Head tilts toward the shoulder when target moves up or down | `World Up Type` is `Scene Up`, which uses world Y — if the head bone's local Y isn't vertical this causes a roll | Set `World Up Type` to **Object Up** on **both** constraints and drag the `Character` root into the `World Up Object` slot. This grounds the up-reference to the skeleton, not the world. |
 | Character's whole body rotates instead of just the head | Multi-Aim Constraint's Constrained Object is set to a higher-up bone (like Hips or Spine) | Drag the *Head* bone specifically into the Constrained Object slot, not a parent bone |
 | Animation Rigging menu doesn't appear | Package not installed | Window → Package Manager → search Animation Rigging → Install |
 | Constraint shows error: "Animator is not valid" | Rig Builder is on a GameObject that doesn't have an Animator | Move the Rig Builder to the Character root (which has the Animator). The Rig itself can be a child |
 | Head tracking works in Editor but not in Build | Animation Rigging requires "Auto Setup from Target Skeleton" or an Animator with a valid Avatar | Ensure your Generic rig's Avatar Definition is set to "Create From This Model" in the FBX import |
+| `OnTriggerEnter` never fires when character enters the zone | Missing Rigidbody on `LookZone`, OR `Character` has no Collider, OR tag mismatch | Confirm: (1) `LookZone` has a Rigidbody set to Is Kinematic = true; (2) `Character` root has a Capsule Collider with Is Trigger unticked; (3) Character's Tag matches `characterTag` exactly — tags are case-sensitive |
+| Constraints enable on entry but never disable — head stays locked on | `OnTriggerExit` didn't fire — usually because the character teleported out of the zone (large `transform.position +=` delta in one frame) or the zone was destroyed | For large movement steps, add an `Update` distance fallback: check `Vector3.Distance(character.position, transform.position) > radius` and call `SetWeight(inactiveWeight)` if true |
+| Head tracking activates before the character reaches the zone visually | Capsule Collider on Character is too large — the outer radius reaches the SphereCollider before the character's visible body does | Reduce the Capsule Collider's Radius on the Character (try `0.25`) or increase the Sphere Collider's Centre Y to match the character's torso height |
 | Mouse doesn't move the target | `InputSystem.actions.FindAction("Look")` returned null | Check Project Settings → Input System Package — confirm the project-wide actions asset exists with a Look action. Same fix as Lab 4's similar issue |
 | Target falls below the floor | `minHeight` is too low or has been disabled | The default `minHeight = 0.2` should keep the target above a `y = 0` floor; raise if your floor is higher |
 | Head jitters or flips at extreme angles | Min/Max limits create unreachable target positions causing the constraint solver to oscillate | Widen the limits slightly, or lower the constraint weight |
@@ -465,9 +696,9 @@ These stretch tasks are open-ended and not walked through. They're where the cur
 ---
 
 ## Files produced by end of lab
-- `Lab06_HeadTracking/` Unity project (from starter)
 - `Assets/Scripts/TargetMover.cs`
-- `Assets/Scenes/Lab06_Chamber.unity` (modified with Rig Builder + Rig + Multi-Aim Constraint + LookTarget added)
+- `Assets/Scripts/LookAtZone.cs`
+- `Assets/Scenes/Lab06_Chamber.unity` (modified: Rig Builder, HeadTrackingRig with HeadYaw + HeadPitch constraints, LookTarget sphere, LookZone trigger)
 
 ---
 
