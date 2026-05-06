@@ -83,7 +83,7 @@ The whole environment runs on layered systems you've built piece by piece: keyfr
 ```
 unity-animation-labs/
 ├── README.md                       (this file)
-├── Labs/
+└── Labs/
    ├── Lab01_BouncingBall.md
    ├── Lab02_AnimatingACharacter.md
    ├── Lab03_ProceduralAnimation.md
