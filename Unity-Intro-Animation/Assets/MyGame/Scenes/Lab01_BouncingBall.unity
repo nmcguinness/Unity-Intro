@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 330585545}
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
+  - component: {fileID: 330585548}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -205,8 +206,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: -0.024903642, y: -0.9133005, z: -0.056942504, w: 0.4025165}
+  m_LocalPosition: {x: 3.412928, y: 1.8635486, z: 1.2011899}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -256,6 +257,47 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &330585548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fee3f7dd64f0964f834feda5b02f20d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnityTemplateProjects.SimpleCameraController
+  boost: 2.5
+  positionLerpTime: 0.142
+  mouseSensitivity: 45
+  mouseSensitivityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.5
+      inSlope: 0
+      outSlope: 5
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 2.5
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  rotationLerpTime: 0.254
+  invertY: 1
 --- !u!1001 &349306302
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -320,13 +362,29 @@ PrefabInstance:
       propertyPath: m_Name
       value: IcoSphere
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d7b21cb00a4a7e147bb429f72b40efe2, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d7b21cb00a4a7e147bb429f72b40efe2, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d7b21cb00a4a7e147bb429f72b40efe2, type: 3}
+      propertyPath: m_TagString
+      value: Collectible
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d7b21cb00a4a7e147bb429f72b40efe2, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d7b21cb00a4a7e147bb429f72b40efe2, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1690107940}
+      addedObject: {fileID: 1690107943}
   m_SourcePrefab: {fileID: 100100000, guid: d7b21cb00a4a7e147bb429f72b40efe2, type: 3}
 --- !u!1 &410087039
 GameObject:
@@ -509,7 +567,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: d7b21cb00a4a7e147bb429f72b40efe2, type: 3}
   m_PrefabInstance: {fileID: 349306302}
   m_PrefabAsset: {fileID: 0}
---- !u!95 &1690107940
+--- !u!95 &1690107943
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
@@ -519,7 +577,7 @@ Animator:
   m_GameObject: {fileID: 1690107939}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: e0e3812d79a72e8408f4cbed3e69276d, type: 2}
+  m_Controller: {fileID: 9100000, guid: 35724c1db79fb3646962fc70deac3697, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -544,12 +602,20 @@ PrefabInstance:
       value: CorridorFloor
       objectReference: {fileID: 0}
     - target: {fileID: 8013049716035746317, guid: 1136b435d577dc44582ddea7d0cfbcd0, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8013049716035746317, guid: 1136b435d577dc44582ddea7d0cfbcd0, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8013049716035746317, guid: 1136b435d577dc44582ddea7d0cfbcd0, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8013049716035746317, guid: 1136b435d577dc44582ddea7d0cfbcd0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.29
       objectReference: {fileID: 0}
     - target: {fileID: 8013049716035746317, guid: 1136b435d577dc44582ddea7d0cfbcd0, type: 3}
       propertyPath: m_LocalPosition.z

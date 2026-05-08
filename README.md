@@ -53,6 +53,18 @@ If you've never opened the Unity Editor before, do that first. Create an empty 3
 
 ---
 
+## Supplementary labs
+
+These labs sit outside the assessed series. Each is self-contained — pick any up before, between, or after the numbered labs. They are marked with the difficulty level that assumes you have completed the numbered lab listed under prerequisites.
+
+| # | Lab | Description | Level | Key concepts | File |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| **S1** | PBR Materials — Building a Sci-Fi Crate | Progressively dress a sci-fi crate using all six core URP Lit material properties — Base Colour, Normal Map, Metallic, Smoothness, Emission (HDR + Bloom), and Opacity. 45 minutes. | Foundational | URP Lit shader, Base Colour, Normal Map, Metallic, Smoothness, HDR Emission, Bloom, Surface Type, Transparency | [Lab S1](Supplementary/LabS_PBRMaterials.md) |
+| **S2** | Vertex Displacement — Time, Mouse Ripples & Ocean Waves | Build three Shader Graph shaders that move vertices at runtime: a time-driven normal pulse on a sphere, a mouse-position ripple on a plane (with a companion C# script), and a sine-wave ocean surface. 60 minutes. | Advanced | Shader Graph, vertex stage, `Time.SineTime`, normal displacement, `Material.SetVector`, `Physics.Raycast`, sine wave, world-to-object transform | [Lab S2](Supplementary/LabS_VertexDisplacement.md) |
+| **S3** | Blend Trees — Smooth Walk, Run & Strafe Locomotion | Import a rigged humanoid and seven Mixamo In Place clips, assemble them into a 2D Freeform Cartesian blend tree, and drive it from a fully-commented `LocomotionController` script using the Input System and `Vector2.SmoothDamp`. 60 minutes. | Intermediate | Animator blend tree, 2D Freeform Cartesian, Mixamo retargeting, `VelocityX`/`VelocityZ` parameters, `StringToHash`, `SmoothDamp`, Input System | [Lab S3](Supplementary/LabS_BlendTrees.md) |
+
+---
+
 ## Recommended order
 
 The numbered labs are intended to be worked through **in order** — they share assets and the scripts in each lab build on the previous one's setup. Lab 6 is take-home and optional, recommended after Lab 5. Lab S can be slotted in at any point but lands best after Lab 5, where you've already met emission casually and want to understand it properly.
